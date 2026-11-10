@@ -153,3 +153,27 @@ softRenderer.draw(solid,Math.PI/2,2000);assert.ok(filled()>thin*2);const shades=
 for(const direction of ['vertical','diagonal']){softRenderer.draw({...solid,direction},Math.PI/2,paints*1000+3000);assert.ok(filled()>500)}
 const countBeforeDispose=paints;softRenderer.dispose();softRenderer.draw(solid,0,99999);assert.equal(paints,countBeforeDispose);
 console.log('Passed: software 3D rasterization, smooth lighting, increasing thickness, multiple axes and resource cleanup.');
+// Дорога одноразова купівля; збереження орієнтації та бонус ручного режиму.
+const Orbit=require('../rotation-controls.js');
+let manual=G.normalise({...saved,retake:false,qualityLevel:42,potential:4999999,directions:['clockwise'],direction:'clockwise'});
+assert.equal(G.price(manual,'direction','free'),5000000);const beforeManual={...manual};assert.equal(G.buy(manual,'direction','free'),false);assert.deepEqual(manual,beforeManual);
+manual.potential=5000000;const automaticIncome=G.income(manual);assert.equal(G.buy(manual,'direction','free'),true);assert.equal(manual.potential,0);assert.equal(manual.direction,'free');assert.equal(G.directionMultiplier(manual),3);assert.ok(Math.abs(G.income(manual)/automaticIncome-3)<1e-12);
+assert.equal(G.buy(manual,'direction','free'),false);assert.equal(manual.directions.filter(x=>x==='free').length,1);
+const bounds={left:0,top:0,width:200,height:200},front=Orbit.project(100,100,bounds),right=Orbit.project(200,100,bounds);assert.deepEqual(front,[0,0,1]);assert.ok(Math.abs(Math.hypot(...Orbit.project(900,700,bounds))-1)<1e-12);
+manual.freeRotation=Orbit.turn(manual.freeRotation,front,right);const turned=F.transform(Orbit.matrix(manual.freeRotation),front);assert.ok(Math.abs(turned[0]-1)<1e-12);assert.ok(Math.abs(turned[2])<1e-12);
+const restoredManual=G.normalise(JSON.parse(JSON.stringify(manual)));assert.equal(restoredManual.direction,'free');assert.ok(Math.abs(restoredManual.freeRotation[1]-manual.freeRotation[1])<1e-12);assert.equal(G.price(restoredManual,'direction','free'),null);
+assert.deepEqual(F.modelRotation(manual,0,0),F.modelRotation(manual,999,8));assert.ok(Orbit.cssMatrix(manual.freeRotation).startsWith('matrix3d('));
+for(const q of [undefined,null,[0,0,0,0],[Infinity,0,0,1],[NaN,0,0,1],['1',0,0,1],[100,0,0,1]])assert.deepEqual(G.normaliseRotation(q),[0,0,0,1]);
+const opposite=Orbit.turn([0,0,0,1],[0,0,1],[0,0,-1]);assert.ok(F.transform(Orbit.matrix(opposite),[0,0,1])[2]<-.9999);
+let repeatedRotation=[0,0,0,1];for(let i=0;i<1000;i++)repeatedRotation=Orbit.turn(repeatedRotation,front,Orbit.project(105+(i%20),105+(i%17),bounds));assert.ok(Math.abs(Math.hypot(...repeatedRotation)-1)<1e-12);
+// Захоплення курсора зберігає рух поза яблуком; скасування прибирає захоплення.
+function eventNode(){const handlers=new Map();return{handlers,addEventListener:(e,f)=>handlers.set(e,f),removeEventListener:(e,f)=>{if(handlers.get(e)===f)handlers.delete(e)},fire:(e,value={})=>handlers.get(e)?.({preventDefault(){},...value})}}
+const doc=eventNode(),view=eventNode(),target=eventNode(),classes=new Set(),captures=new Set();doc.defaultView=view;doc.hidden=false;target.ownerDocument=doc;target.classList={add:x=>classes.add(x),remove:x=>classes.delete(x)};target.focus=()=>{};target.getBoundingClientRect=()=>bounds;target.setPointerCapture=id=>captures.add(id);target.hasPointerCapture=id=>captures.has(id);target.releasePointerCapture=id=>captures.delete(id);
+let q=[0,0,0,1],commits=0,enabled=true;const controller=Orbit.attach(target,{enabled:()=>enabled&&!doc.hidden,rotation:()=>q,change:next=>q=next,commit:()=>commits++});
+const down={button:0,pointerId:7,clientX:100,clientY:100};target.fire('pointerdown',{...down,button:2});assert.equal(captures.size,0);target.fire('pointerdown',down);assert.ok(captures.has(7));assert.ok(classes.has('dragging'));
+doc.fire('pointermove',{pointerId:9,clientX:200,clientY:100});assert.deepEqual(q,[0,0,0,1]);doc.fire('pointermove',{pointerId:7,clientX:450,clientY:150});assert.ok(Math.abs(q[0])+Math.abs(q[1])+Math.abs(q[2])>0);doc.fire('pointerup',{pointerId:7});assert.equal(captures.size,0);assert.equal(classes.has('dragging'),false);assert.equal(commits,1);
+target.fire('pointerdown',down);doc.fire('pointercancel',{pointerId:7});assert.equal(commits,2);assert.equal(classes.has('dragging'),false);
+target.fire('pointerdown',down);doc.hidden=true;doc.fire('visibilitychange');assert.equal(captures.size,0);assert.equal(commits,3);doc.hidden=false;
+const beforeDisabled=[...q];enabled=false;target.fire('pointerdown',down);doc.fire('pointermove',{pointerId:7,clientX:10,clientY:10});assert.deepEqual(q,beforeDisabled);enabled=true;target.fire('keydown',{key:'ArrowDown'});assert.notDeepEqual(q,beforeDisabled);assert.equal(commits,4);
+controller.dispose();assert.equal(target.handlers.size,0);assert.equal(doc.handlers.size,0);assert.equal(view.handlers.size,0);
+console.log('Passed: cursor-mode price, one-time purchase, bonus, quaternion saves, unrestricted trackball, keyboard, cancellation and listener cleanup.');

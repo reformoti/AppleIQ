@@ -2,6 +2,7 @@
 // Процедурна геометрія та освітлення; зовнішні моделі й текстури не потрібні.
 ((scope)=>{
   const G=scope.AppleProgression||(typeof require==='function'?require('./progression.js'):null);
+  const Orbit=scope.AppleOrbit||(typeof require==='function'?require('./rotation-controls.js'):null);
   const TAU=Math.PI*2,clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
   function svg(p,index=0){
     const form=G.appleForm(p),points=[];
@@ -55,6 +56,7 @@
     const r=[c+x*x*t,y*x*t+z*s,z*x*t-y*s,x*y*t-z*s,c+y*y*t,z*y*t+x*s,x*z*t+y*s,y*z*t-x*s,c+z*z*t];
     const a=-.15,ct=Math.cos(a),st=Math.sin(a);return matrixMultiply([1,0,0,0,ct,st,0,-st,ct],r);
   }
+  function modelRotation(p,angle,index=0){return p.direction==='free'?matrixMultiply(Orbit.matrix(p.freeRotation),rotation('clockwise',0)):rotation(p.direction,angle+index*.23)}
   function transform(m,p){return[m[0]*p[0]+m[3]*p[1]+m[6]*p[2],m[1]*p[0]+m[4]*p[1]+m[7]*p[2],m[2]*p[0]+m[5]*p[1]+m[8]*p[2]]}
   function layout(width,height,count){
     const columns=Math.ceil(Math.sqrt(count)),rows=Math.ceil(count/columns),cell=Math.min(count===1?200:140,width/(columns+.4),height/(rows+.2));
@@ -120,7 +122,7 @@
       const current=Math.round(G.appleVolume(p)*10);if(current!==level){const data=createGeometry(current);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);vertexCount=data.length/7;level=current}
       gl.uniform1f(uniforms.polish,G.appleVolume(p));
       layout(b.width,b.height,p.appleCount).forEach((o,i)=>{
-        gl.uniformMatrix3fv(uniforms.rotation,false,new Float32Array(rotation(p.direction,angle+i*.23)));
+        gl.uniformMatrix3fv(uniforms.rotation,false,new Float32Array(modelRotation(p,angle,i)));
         gl.uniform2f(uniforms.scale,o.scale*2/b.width,o.scale*2/b.height);gl.uniform2f(uniforms.offset,o.x*2/b.width-1,1-o.y*2/b.height);
         gl.uniform3fv(uniforms.body,new Float32Array(bodyColor(p,now,i)));gl.drawArrays(gl.TRIANGLES,0,vertexCount);
       });
@@ -142,7 +144,7 @@
       if(canvas.width!==w||canvas.height!==h||!image){canvas.width=w;canvas.height=h;image=c.createImageData(w,h);depthBuffer=new Float32Array(w*h)}
       image.data.fill(0);depthBuffer.fill(-Infinity);const pixels=image.data,current=Math.round(G.appleVolume(p)*10);if(level!==current)prepare(current);
       layout(b.width,b.height,p.appleCount).forEach((o,index)=>{
-        const r=rotation(p.direction,angle+index*.23),body=bodyColor(p,now,index);
+        const r=modelRotation(p,angle,index),body=bodyColor(p,now,index);
         for(let i=0,k=0;i<vertices.length;i+=7,k+=8){
           const v=transform(r,[vertices[i],vertices[i+1],vertices[i+2]]);let n=transform(r,[vertices[i+3],vertices[i+4],vertices[i+5]]);const kind=vertices[i+6];
           if(kind>=1.5&&n[2]<0)n=n.map(x=>-x);
@@ -171,5 +173,5 @@
     let gl;try{gl=canvas.getContext('webgl',{alpha:true,antialias:true,premultipliedAlpha:false})}catch{}
     return gl?webglRenderer(canvas,gl):canvasRenderer(canvas);
   }
-  const api=Object.freeze({svg,create,createGeometry,rotation,transform});scope.AppleFruit=api;if(typeof module!=='undefined')module.exports=api;
+  const api=Object.freeze({svg,create,createGeometry,rotation,modelRotation,transform});scope.AppleFruit=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

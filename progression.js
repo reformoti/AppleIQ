@@ -1,14 +1,15 @@
 'use strict';
 // Усі суми зберігаються в тисячних частках IQ, щоб покупки не втрачали точність.
 ((scope)=>{
-const DIRECTIONS=[{id:'clockwise',label:'За годинниковою',cost:0,bonus:1},{id:'reverse',label:'Проти годинникової',cost:2500,bonus:1.25},{id:'horizontal',label:'Ліворуч / праворуч',cost:8000,bonus:1.6},{id:'vertical',label:'Вгору / вниз',cost:15000,bonus:2},{id:'diagonal',label:'По діагоналі',cost:30000,bonus:2.5}];
+const DIRECTIONS=[{id:'clockwise',label:'За годинниковою',cost:0,bonus:1},{id:'reverse',label:'Проти годинникової',cost:2500,bonus:1.25},{id:'horizontal',label:'Ліворуч / праворуч',cost:8000,bonus:1.6},{id:'vertical',label:'Вгору / вниз',cost:15000,bonus:2},{id:'diagonal',label:'По діагоналі',cost:30000,bonus:2.5},{id:'free',label:'Курсором',cost:5000000,bonus:3}];
 const integer=(v,max)=>Number.isInteger(v)&&v>=0?Math.min(v,max):0;
+function normaliseRotation(q){if(!Array.isArray(q)||q.length!==4||!q.every(x=>Number.isFinite(x)&&Math.abs(x)<=2))return[0,0,0,1];const n=Math.hypot(...q);return n>1e-6?q.map(x=>x/n):[0,0,0,1]}
 const IQ_THRESHOLDS=Object.freeze([40,80,100]);
 const iqTier=iq=>IQ_THRESHOLDS.filter(threshold=>iq>=threshold).length;
 const iqMultiplier=p=>1+(Number.isFinite(p.iq)?Math.max(0,Math.min(250,p.iq)):0)/100;
 const retakeCost=p=>25000*2**Math.max(integer(p.retakeTier,3),iqTier(p.iq));
 function recordIQ(p,iq){p.iq=Math.max(8,Math.min(250,Math.round(iq)));p.retakeTier=Math.max(integer(p.retakeTier,3),iqTier(p.iq))}
-function normalise(p){p.quietDaySeen=p.quietDaySeen===true;p.retakeTier=Math.max(integer(p.retakeTier,3),iqTier(p.iq));p.retakeCount=integer(p.retakeCount,1000000);p.baseIQ=Number.isInteger(p.baseIQ)&&p.baseIQ>=8&&p.baseIQ<=12?p.baseIQ:p.iq>=8&&p.iq<=12?p.iq:10;p.speedLevel=integer(p.speedLevel,80);p.qualityLevel=integer(p.qualityLevel,42);p.appleCount=Math.max(1,integer(p.appleCount,9));p.directions=Array.isArray(p.directions)?[...new Set(['clockwise',...p.directions.filter(id=>DIRECTIONS.some(d=>d.id===id))])]:['clockwise'];p.direction=p.directions.includes(p.direction)?p.direction:'clockwise';p.rainbow=p.rainbow===true;p.retakeUnlocked=p.retakeUnlocked===true&&p.retake!==true;p.advanced=p.advanced===true;p.discovered=p.discovered===true;p.thoughtSeen=p.thoughtSeen===true;p.retake=p.retake===true;p.potential=Number.isFinite(p.potential)&&p.potential>=0?Math.min(p.potential,1e15):0;return p}
+function normalise(p){p.freeRotation=normaliseRotation(p.freeRotation);p.quietDaySeen=p.quietDaySeen===true;p.retakeTier=Math.max(integer(p.retakeTier,3),iqTier(p.iq));p.retakeCount=integer(p.retakeCount,1000000);p.baseIQ=Number.isInteger(p.baseIQ)&&p.baseIQ>=8&&p.baseIQ<=12?p.baseIQ:p.iq>=8&&p.iq<=12?p.iq:10;p.speedLevel=integer(p.speedLevel,80);p.qualityLevel=integer(p.qualityLevel,42);p.appleCount=Math.max(1,integer(p.appleCount,9));p.directions=Array.isArray(p.directions)?[...new Set(['clockwise',...p.directions.filter(id=>DIRECTIONS.some(d=>d.id===id))])]:['clockwise'];p.direction=p.directions.includes(p.direction)?p.direction:'clockwise';p.rainbow=p.rainbow===true;p.retakeUnlocked=p.retakeUnlocked===true&&p.retake!==true;p.advanced=p.advanced===true;p.discovered=p.discovered===true;p.thoughtSeen=p.thoughtSeen===true;p.retake=p.retake===true;p.potential=Number.isFinite(p.potential)&&p.potential>=0?Math.min(p.potential,1e15):0;return p}
 const sides=p=>Math.min(360,4+p.qualityLevel*(p.qualityLevel+1)/2);
 const appleForm=p=>Math.max(0,Math.min(1,(p.qualityLevel-27)/5));
 const appleVolume=p=>Math.max(0,Math.min(1,(p.qualityLevel-32)/10));
@@ -22,5 +23,5 @@ function buy(p,type,id){if(!canBuy(p,type,id))return false;const cost=price(p,ty
 function startRetake(p){if(!p.retakeUnlocked||p.retake||!p.advanced||p.phase!=='mind'||p.step!==5)return false;p.retakeUnlocked=false;p.retake=true;return true}
 function retakeIQ(p,correct){return Math.min(250,p.baseIQ+Math.max(0,Math.min(20,Math.floor(Number(correct)||0)))*5)}
 function schoolReaction(iq){return iq<40?'laugh':iq<80?'quiet':'friends'}
-const api={DIRECTIONS,IQ_THRESHOLDS,normalise,sides,appleForm,appleVolume,hasStem,directionMultiplier,speed,price,income,iqMultiplier,retakeCost,recordIQ,canBuy,buy,startRetake,retakeIQ,schoolReaction};scope.AppleProgression=Object.freeze(api);if(typeof module!=='undefined')module.exports=api;
+const api={DIRECTIONS,IQ_THRESHOLDS,normalise,normaliseRotation,sides,appleForm,appleVolume,hasStem,directionMultiplier,speed,price,income,iqMultiplier,retakeCost,recordIQ,canBuy,buy,startRetake,retakeIQ,schoolReaction};scope.AppleProgression=Object.freeze(api);if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

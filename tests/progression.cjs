@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 const path=require('node:path');
-const T=require('../test-tasks.js'),G=require('../progression.js');
+const T=require('../test-tasks.js'),G=require('../progression.js'),F=require('../fruit-renderer.js');
 for(let i=0;i<20;i++){
   const q=T.logicalTask(i);
   assert.equal(q.cells.length,9);assert.equal(q.cells[8],null);
@@ -36,7 +36,7 @@ function storyHarness(saved){
   const c=new Proxy({},{get:(o,k)=>k in o?o[k]:()=>{},set:(o,k,v)=>(o[k]=v,true)});
   function get(s){if(s==='canvas')s='#school-canvas';if(!nodes.has(s))nodes.set(s,node());return nodes.get(s)}
   function node(){const classes=new Set();return{style:{},hidden:false,classList:{add:x=>classes.add(x),remove:x=>classes.delete(x),contains:x=>classes.has(x)},append(){},remove(){},setAttribute(){},focus(){},querySelector:get,querySelectorAll:()=>[],getBoundingClientRect:()=>({width:1363,height:936}),getContext:()=>c,addEventListener(type,f){this[type]=f}}}
-  const win={AppleProgression:G,AppleAudio:{setTrack(){}},addEventListener:(e,f)=>events.set(e,f),dispatchEvent:e=>events.get(e.type)?.(e)};
+  const win={AppleFruit:F,AppleProgression:G,AppleAudio:{setTrack(){}},addEventListener:(e,f)=>events.set(e,f),dispatchEvent:e=>events.get(e.type)?.(e)};
   const context={window:win,document:{hidden:false,body:node(),querySelector:get,querySelectorAll:()=>[],createElement:type=>{const n=node();if(type==='aside')nodes.set('aside',n);return n},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},matchMedia:()=>({matches:false}),devicePixelRatio:1,requestAnimationFrame:f=>{frames.set(++frameId,f);return frameId},cancelAnimationFrame:id=>frames.delete(id),clearTimeout(){},setTimeout(){return 1},CustomEvent:class{constructor(type){this.type=type}},Date,Math,Intl};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../story.js'),'utf8'),context);
   return{api:win.AppleStory,get,events,p:()=>JSON.parse(store.get('apple-iq-story-01')),tick(t){const callbacks=[...frames.values()];frames.clear();callbacks.forEach(f=>f(t))}};
@@ -110,3 +110,46 @@ h=storyHarness({...saved,iq:99,retake:false});h.api.restore();h.tick(1000);h.tic
 // Після перегляду шкільні сцени лишаються, новий розділ не повторюється.
 h=storyHarness({...seen,retake:true});h.api.restore();h.api.finishRetake(105);assert.equal(h.p().phase,'school');h.get('#school-skip').onclick();assert.equal(h.p().phase,'mind');assert.equal(h.p().quietDaySeen,true);
 console.log('Passed: matrices, economy, every-result scenes, quiet-day threshold, one-time playback, mid-scene/end-frame restoration and retained progression.');
+// Від 360 вершин до плодоніжки, п'яти форм і десяти рівнів об'єму.
+for(let q=0;q<=42;q++){
+ const p=G.normalise({...saved,retake:false,qualityLevel:q});
+ assert.equal(G.sides(p),Math.min(360,4+q*(q+1)/2));
+ assert.equal(G.hasStem(p),q>=27);
+ assert.ok(Math.abs(G.appleForm(p)-Math.max(0,Math.min(1,(q-27)/5)))<1e-12);
+ assert.ok(Math.abs(G.appleVolume(p)-Math.max(0,Math.min(1,(q-32)/10)))<1e-12);
+ assert.equal(F.svg(p).includes('class="fruit-stem"'),q>=27);
+ assert.equal(F.svg(p).includes('class="fruit-leaf"'),q>=28);
+ assert.equal(G.normalise(JSON.parse(JSON.stringify(p))).qualityLevel,q);
+ if(q<42){assert.notEqual(G.price(p,'quality'),null);assert.ok(G.income({...p,qualityLevel:q+1})>G.income(p))}else assert.equal(G.price(p,'quality'),null);
+}
+const maxQuality=G.normalise({...saved,retake:false,qualityLevel:42,potential:1e10});const beforeMax={...maxQuality};assert.equal(G.buy(maxQuality,'quality'),false);assert.deepEqual(maxQuality,beforeMax);
+const five=G.normalise({...saved,qualityLevel:27,retake:false,potential:1e12});for(let i=1;i<=5;i++){assert.equal(G.buy(five,'quality'),true);assert.equal(G.appleVolume(five),0);assert.equal(G.appleForm(five),i/5)}
+for(let i=1;i<=10;i++){assert.equal(G.buy(five,'quality'),true);assert.equal(G.appleForm(five),1);assert.equal(G.appleVolume(five),i/10)}assert.equal(five.qualityLevel,42);
+// Діє вибраний напрямок, а не пасивна кількість відкритих напрямків.
+const directions=G.DIRECTIONS.map(d=>d.id),directionState=G.normalise({...saved,retake:false,qualityLevel:42,directions,direction:'clockwise'}),baseIncome=G.income(directionState);
+for(const [id,multiplier] of [['clockwise',1],['reverse',1.25],['horizontal',1.6],['vertical',2],['diagonal',2.5]]){
+ const p={...directionState,direction:id};assert.equal(G.directionMultiplier(p),multiplier);assert.ok(Math.abs(G.income(p)/baseIncome-multiplier)<1e-12);
+}
+assert.equal(G.income({...directionState,directions:['clockwise']}),baseIncome);
+assert.equal(G.directionMultiplier({...directionState,directions:['clockwise'],direction:'diagonal'}),1);
+let purchaseDirection=G.normalise({...saved,retake:false,potential:30000,directions:['clockwise'],direction:'clockwise'});const beforeDirection=G.income(purchaseDirection);assert.equal(G.buy(purchaseDirection,'direction','diagonal'),true);assert.equal(purchaseDirection.potential,0);assert.equal(purchaseDirection.direction,'diagonal');assert.equal(G.income(purchaseDirection)/beforeDirection,2.5);
+// Справжня сітка збільшує товщину й деталізацію. Нормалі та координати скінченні.
+let previousSize=0;
+for(let level=1;level<=10;level++){
+ const mesh=F.createGeometry(level);assert.equal(mesh.length%21,0);assert.ok(mesh.length>previousSize);previousSize=mesh.length;let maxZ=0;
+ for(let i=0;i<mesh.length;i+=7){assert.ok([...mesh.slice(i,i+7)].every(Number.isFinite));assert.ok(Math.abs(Math.hypot(mesh[i+3],mesh[i+4],mesh[i+5])-1)<1e-5);maxZ=Math.max(maxZ,Math.abs(mesh[i+2]))}
+ assert.ok(maxZ>.8*level/10&&maxZ<1.1*level/10);
+ for(const id of directions){const r=F.rotation(id,1.3),vector=F.transform(r,[.3,.5,.7]);assert.ok(Math.abs(Math.hypot(...vector)-Math.hypot(.3,.5,.7))<1e-12)}
+}
+assert.ok(Math.abs(F.transform(F.rotation('horizontal',Math.PI/2),[1,0,0])[2])>.98);
+assert.ok(Math.abs(F.transform(F.rotation('vertical',Math.PI/2),[0,1,0])[2])>.98);
+console.log('Passed: stem, five morph steps, ten 3D steps, quality saves, maximum level, active rotation bonuses and volumetric geometry.');
+// Резервне відтворення має освітлені пікселі, гладкі відтінки й справжню товщину.
+let rendered=null,paints=0;const softCanvas={dataset:{},width:0,height:0,getBoundingClientRect:()=>({width:240,height:240}),getContext:type=>type==='webgl'?null:{createImageData:(w,h)=>({width:w,height:h,data:new Uint8ClampedArray(w*h*4)}),putImageData:image=>{rendered=image;paints++}}};
+const softRenderer=F.create(softCanvas),solid=G.normalise({...saved,retake:false,qualityLevel:42,appleCount:1,direction:'horizontal',directions:['clockwise','horizontal','vertical','diagonal']});
+const filled=()=>{let n=0;for(let i=3;i<rendered.data.length;i+=4)if(rendered.data[i])n++;return n};
+softRenderer.draw({...solid,qualityLevel:33},Math.PI/2,1000);const thin=filled();assert.ok(thin>0);assert.equal(softCanvas.dataset.renderer,'canvas');
+softRenderer.draw(solid,Math.PI/2,2000);assert.ok(filled()>thin*2);const shades=new Set();for(let i=0;i<rendered.data.length;i+=4)if(rendered.data[i+3])shades.add(rendered.data[i]+','+rendered.data[i+1]+','+rendered.data[i+2]);assert.ok(shades.size>100);
+for(const direction of ['vertical','diagonal']){softRenderer.draw({...solid,direction},Math.PI/2,paints*1000+3000);assert.ok(filled()>500)}
+const countBeforeDispose=paints;softRenderer.dispose();softRenderer.draw(solid,0,99999);assert.equal(paints,countBeforeDispose);
+console.log('Passed: software 3D rasterization, smooth lighting, increasing thickness, multiple axes and resource cleanup.');

@@ -30,3 +30,5 @@
 @media(prefers-reduced-motion:reduce){.transformation-panel.shop-enter{animation:none}.shop-shade{backdrop-filter:none}}
 
 .retest-arrow{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+
+.training-volume{display:block;width:100%;height:100%;flex:1;min-width:0}.direction-caption{display:flex;flex-direction:column;gap:2px}.direction-boost{font:8px monospace;color:#9b9baa}.direction-button{min-height:51px}

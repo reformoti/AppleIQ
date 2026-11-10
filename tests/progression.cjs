@@ -48,7 +48,7 @@ h.api.finishRetake(30);assert.equal(h.p().retakeCount,1);assert.equal(h.p().iq,2
 h.tick(1000);h.tick(2000);
 h=storyHarness(h.p());assert.equal(h.api.restore(),true);assert.equal(h.api.testRound(),2);h.get('#school-skip').onclick();assert.equal(h.p().phase,'mind');assert.equal(h.p().potential,42000);
 h.get('#transform-toggle').onclick();assert.ok(!h.get('aside').innerHTML?.includes('<p>'));
-assert.ok(h.get('aside').innerHTML.includes('Активувати · 25,00 IQ'));
+assert.ok(h.get('aside').innerHTML.includes('25,00 IQ'));assert.ok(h.get('aside').innerHTML.includes('Активувати'));
 // Повторна оплата потрібна навіть після незмінного результату.
 const startState=h.p();assert.equal(G.buy(startState,'retake'),true);assert.equal(startState.potential,17000);
 h=storyHarness(startState);assert.equal(h.api.restore(),true);h.get('#transform-toggle').onclick();h.get('#start-retake').click();assert.equal(h.p().retake,true);assert.equal(h.p().retakeCount,1);assert.equal(h.api.testRound(),2);
@@ -91,6 +91,22 @@ for(const iq of [20,20,40,40,80,80,100,20]){
  h.api.finishRetake(iq);const finished=h.p();assert.equal(finished.phase,'school');assert.equal(finished.eventTime,0);assert.equal(finished.iq,iq);assert.equal(finished.retakeCount,count+1);assert.equal(finished.retakeUnlocked,false);assert.equal(finished.qualityLevel,7);
  h.api.finishRetake(iq);assert.equal(h.p().retakeCount,count+1);
  // Відновлення посеред сцени та її завершення не відкриває безкоштовної спроби.
- h=storyHarness(finished);assert.equal(h.api.restore(),true);h.get('#school-skip').onclick();repeated={...h.p(),retake:true};assert.equal(repeated.retakeUnlocked,false);
+ h=storyHarness(finished);assert.equal(h.api.restore(),true);h.get('#school-skip').onclick();if(h.p().phase==='quiet-day')h.get('#quiet-next').onclick();repeated={...h.p(),retake:true};assert.equal(repeated.retakeUnlocked,false);
 }
-console.log('Passed: matrices, scoring, IQ farm bonus, recurring fees, all threshold boundaries, unchanged/worse results, every-result scenes, reloads and legacy activation.');
+// Перший результат 100+ відкриває спокійний розділ після шкільної сцени.
+h=storyHarness({...saved,iq:99,retake:true,retakeUnlocked:false,quietDaySeen:false});h.api.restore();h.api.finishRetake(100);
+assert.equal(h.p().phase,'school');h.get('#school-skip').onclick();assert.equal(h.p().phase,'quiet-day');assert.equal(h.p().quietDaySeen,false);assert.equal(h.p().potential,42000);
+h.tick(1000);h.tick(2000);h.tick(3000);const mid=h.p();assert.ok(mid.eventTime>0);assert.equal(mid.phase,'quiet-day');
+h=storyHarness(mid);assert.equal(h.api.restore(),true);assert.equal(h.p().quietDaySeen,false);
+for(let t=1000;t<=36000;t+=1000)h.tick(t);
+assert.equal(h.p().phase,'quiet-day');assert.equal(h.p().eventTime,34);assert.equal(h.get('#quiet-next').textContent,'Далі');assert.equal(h.p().potential,42000);
+// Останній кадр відновлюється, а вихід зберігає весь прогрес.
+h=storyHarness(h.p());h.api.restore();h.tick(1000);assert.equal(h.get('#quiet-next').textContent,'Далі');h.get('#quiet-next').onclick();
+assert.equal(h.p().quietDaySeen,true);assert.equal(h.p().phase,'mind');assert.equal(h.p().iq,100);assert.equal(h.p().qualityLevel,7);assert.equal(h.p().potential,42000);assert.equal(h.p().retakeCount,1);
+const seen=h.p();h=storyHarness(seen);assert.equal(h.api.restore(),true);h.tick(1000);h.tick(2000);assert.equal(h.p().phase,'mind');
+// Старе збереження зі 100 IQ відкриває розділ, але 99 IQ ще недостатньо.
+h=storyHarness({...saved,iq:100,retake:false,quietDaySeen:undefined});h.api.restore();assert.equal(h.p().phase,'quiet-day');h.get('#quiet-next').onclick();assert.equal(h.p().quietDaySeen,true);
+h=storyHarness({...saved,iq:99,retake:false});h.api.restore();h.tick(1000);h.tick(2000);assert.equal(h.p().phase,'mind');
+// Після перегляду шкільні сцени лишаються, новий розділ не повторюється.
+h=storyHarness({...seen,retake:true});h.api.restore();h.api.finishRetake(105);assert.equal(h.p().phase,'school');h.get('#school-skip').onclick();assert.equal(h.p().phase,'mind');assert.equal(h.p().quietDaySeen,true);
+console.log('Passed: matrices, economy, every-result scenes, quiet-day threshold, one-time playback, mid-scene/end-frame restoration and retained progression.');

@@ -11,5 +11,6 @@
  function start(p){if(!eligible(p))return false;p.phase='ultimate';p.eventTime=0;return true}
  function choose(p,index){if(p.phase!=='ultimate'||p.ultimateStatus!=='ready'||!Number.isInteger(index)||index<0||index>=20)return false;p.ultimateChoice=index;return true}
  function submit(p){if(p.phase!=='ultimate'||p.ultimateStatus!=='ready'||!Number.isInteger(p.ultimateChoice)||p.ultimateChoice<0||p.ultimateChoice>=20)return false;p.eventTime=0;p.retake=false;p.retakeUnlocked=false;if(p.ultimateChoice===TASK.correct){p.ultimateStatus='passed';G.recordIQ(p,p.iq+TASK.reward);p.phase='ultimate-win'}else{p.ultimateStatus='failed';p.iq=-1;p.potential=-1000;p.phase='vegetable'}return true}
- const api=Object.freeze({TASK,power,eligible,start,choose,submit});scope.AppleUltimate=api;if(typeof module!=='undefined')module.exports=api;
+ function choosePath(p,path){if(p.phase!=='ultimate-win'||p.ultimateStatus!=='passed'||!['happy','genius'].includes(path))return false;p.endingPath=path;p.eventTime=0;p.step=5;if(path==='happy'){G.recordIQ(p,Math.max(125,p.iq));p.phase='happy-end'}else p.phase='mind';return true}
+ const api=Object.freeze({TASK,power,eligible,start,choose,submit,choosePath});scope.AppleUltimate=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -147,7 +147,7 @@ console.log('Passed: stem, five morph steps, ten 3D steps, quality saves, maximu
 // Резервне відтворення має освітлені пікселі, гладкі відтінки й справжню товщину.
 let rendered=null,paints=0;const softCanvas={dataset:{},width:0,height:0,getBoundingClientRect:()=>({width:240,height:240}),getContext:type=>type==='webgl'?null:{createImageData:(w,h)=>({width:w,height:h,data:new Uint8ClampedArray(w*h*4)}),putImageData:image=>{rendered=image;paints++}}};
 const softRenderer=F.create(softCanvas),solid=G.normalise({...saved,retake:false,qualityLevel:42,appleCount:1,direction:'horizontal',directions:['clockwise','horizontal','vertical','diagonal']});
-const filled=()=>{let n=0;for(let i=3;i<rendered.data.length;i+=4)if(rendered.data[i])n++;return n};
+const filled=()=>{let n=0;for(let i=3;i<rendered.data.length;i+=4)if(rendered.data[i]===255)n++;return n};
 softRenderer.draw({...solid,qualityLevel:33},Math.PI/2,1000);const thin=filled();assert.ok(thin>0);assert.equal(softCanvas.dataset.renderer,'canvas');
 softRenderer.draw(solid,Math.PI/2,2000);assert.ok(filled()>thin*2);const shades=new Set();for(let i=0;i<rendered.data.length;i+=4)if(rendered.data[i+3])shades.add(rendered.data[i]+','+rendered.data[i+1]+','+rendered.data[i+2]);assert.ok(shades.size>100);
 for(const direction of ['vertical','diagonal']){softRenderer.draw({...solid,direction},Math.PI/2,paints*1000+3000);assert.ok(filled()>500)}
@@ -177,3 +177,4 @@ target.fire('pointerdown',down);doc.hidden=true;doc.fire('visibilitychange');ass
 const beforeDisabled=[...q];enabled=false;target.fire('pointerdown',down);doc.fire('pointermove',{pointerId:7,clientX:10,clientY:10});assert.deepEqual(q,beforeDisabled);enabled=true;target.fire('keydown',{key:'ArrowDown'});assert.notDeepEqual(q,beforeDisabled);assert.equal(commits,4);
 controller.dispose();assert.equal(target.handlers.size,0);assert.equal(doc.handlers.size,0);assert.equal(view.handlers.size,0);
 console.log('Passed: cursor-mode price, one-time purchase, bonus, quaternion saves, unrestricted trackball, keyboard, cancellation and listener cleanup.');
+

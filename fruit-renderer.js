@@ -27,7 +27,7 @@
     const dv=minus(surface(Math.min(Math.PI-.00001,v+e),u,depth),surface(Math.max(.00001,v-e),u,depth));
     return normal(cross(du,dv));
   }
-  function createGeometry(level,low=false,cinematic=false){
+  function createGeometry(level,low=false,cinematic=false,waterLevel=0){
     level=clamp(Math.round(level),1,10);const depth=level/10;
     const latitude=cinematic?(low?20+level*3:24+level*6):low?16+level*2:16+level*4,longitude=cinematic?(low?32+level*5:48+level*10):low?28+level*3:32+level*5,data=[];
     const vertex=(position,n,kind)=>data.push(...position,...n,kind);
@@ -45,6 +45,13 @@
     for(let j=0;j<16;j++)for(const side of[-1,1]){
       const pts=[leafPoint(j/16,0),leafPoint((j+1)/16,0),leafPoint((j+1)/16,side),leafPoint(j/16,side)];
       const n=normal(cross(minus(pts[1],pts[0]),minus(pts[2],pts[0])));quad(pts,[n,n,n,n],2);
+    }
+    // Підняті над шкіркою об’ємні краплі; геометрія рухається разом із плодом.
+    const drops=[0,12,22,34][clamp(Math.round(waterLevel),0,3)],rings=low?6:8,segments=low?10:14;
+    for(let d=0;d<drops;d++){
+      const v=.23+Math.acos(1-2*(d+.5)/drops)*.85,u=d*2.39996323,point=surface(v,u,depth),out=surfaceNormal(v,u,depth),radius=.04+(d%4)*.009,center=point.map((x,i)=>x+out[i]*radius*.55);
+      const bead=(a,b)=>[Math.sin(a)*Math.cos(b),Math.cos(a),Math.sin(a)*Math.sin(b)];
+      for(let j=0;j<rings;j++)for(let i=0;i<segments;i++){const normals=[[j,i],[j,i+1],[j+1,i+1],[j+1,i]].map(([a,b])=>bead(.0001+a*(Math.PI-.0002)/rings,b*TAU/segments));quad(normals.map(n=>center.map((x,k)=>x+n[k]*radius)),normals,4)}
     }
     return new Float32Array(data);
   }
@@ -68,17 +75,19 @@
   const KEY_LIGHT=normal([-.6,.85,1.3]),FILL_LIGHT=normal([.9,.1,.35]),RIM_LIGHT=normal([-.35,.5,-1]);
   const SHADOW_COLOR=[.005,.004,.009],BOUNCE_COLOR=[.18,.19,.24];
   const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
-  function shadeSurface(n,position,kind,body,polish){
+  function shadeSurface(n,position,kind,body,polish,lightLevel=0){
     const view=normal([-position[0]*.12,-position[1]*.12,4.5-position[2]]),half=normal(KEY_LIGHT.map((v,i)=>v+view[i]));
     const key=Math.max(0,dot(n,KEY_LIGHT)),fill=Math.max(0,dot(n,FILL_LIGHT)),back=Math.max(0,dot(n,RIM_LIGHT));
     const fresnel=Math.pow(1-Math.max(0,dot(n,view)),3),spec=Math.max(0,dot(n,half));
     const broad=Math.pow(spec,18),gloss=Math.pow(spec,35+polish*85),ambient=.12+.12*(n[1]*.5+.5);
     const base=kind<.5?body:kind<1.5?[.29,.16,.075]:[.19,.38,.08];
+    if(kind>3.5)return body.map((v,i)=>clamp(v*.58+.025+[.03,.06,.08][i]*key+fresnel*.38+Math.pow(spec,42)*.9+broad*.13));
+    const detail=clamp(lightLevel,0,3)/3;
     const freckle=Math.pow(Math.max(0,Math.sin(position[0]*91)*Math.sin(position[1]*83)*Math.sin(position[2]*71)),12)*.022*polish;
-    return base.map((v,i)=>clamp(v*(ambient+key*.83+fill*.16)+[.46,.64,1][i]*(back*.08+fresnel*.07)+(kind<.5?[1,.91,.82][i]*(broad*.17+gloss*(.22+.6*polish))+freckle:gloss*.1)));
+    return base.map((v,i)=>clamp(v*(ambient+key*(.83+detail*.15)+fill*(.16+detail*.06))+[.46,.64,1][i]*(back*(.08+detail*.08)+fresnel*(.07+detail*.05))+(kind<.5?[1,.91,.82][i]*(broad*.17+gloss*(.22+.6*polish+detail*.25))+freckle:gloss*.1)));
   }
-  function shadowFootprint(o){return{x:o.x+o.scale*.22,y:o.y+o.scale*1.08,rx:o.scale*1.14,ry:o.scale*.3}}
-  function shadowOpacity(x,y){const radius=Math.hypot(x,y);return radius>=1?0:.62*Math.exp(-(x*x+y*y)*3.5)*(1-clamp((radius-.75)/.25))}
+  function shadowFootprint(o,level=0){return{x:o.x+o.scale*.22,y:o.y+o.scale*1.08,rx:o.scale*(1.14+level*.04),ry:o.scale*(.3+level*.015)}}
+  function shadowOpacity(x,y,level=0){const radius=Math.hypot(x,y);return radius>=1?0:Math.min(.9,.62+level*.06)*Math.exp(-(x*x+y*y)*3.5)*(1-clamp((radius-.75)/.25))}
   const vertexSource=`
     attribute vec3 a_position;
     attribute vec3 a_normal;
@@ -90,7 +99,7 @@
     varying vec3 v_normal;
     varying float v_kind;
     void main(){
-      if(a_kind>2.5){v_position=a_position;v_normal=vec3(0.,0.,1.);v_kind=a_kind;gl_Position=vec4(u_offset+a_position.xy*u_scale,.9,1.);return;}
+      if(a_kind>2.5&&a_kind<3.5){v_position=a_position;v_normal=vec3(0.,0.,1.);v_kind=a_kind;gl_Position=vec4(u_offset+a_position.xy*u_scale,.9,1.);return;}
       vec3 p=u_rotation*a_position;
       v_position=p;v_normal=u_rotation*a_normal;v_kind=a_kind;
       float perspective=4.5/(4.5-p.z);
@@ -100,11 +109,13 @@
     precision mediump float;
     uniform vec3 u_body;
     uniform float u_polish;
+    uniform float u_light;
+    uniform float u_shadow;
     varying vec3 v_position;
     varying vec3 v_normal;
     varying float v_kind;
     void main(){
-      if(v_kind>2.5){vec2 uv=v_position.xy*vec2(1.7,2.1);float radius=length(uv);float shadow=.62*exp(-dot(uv,uv)*3.5)*(1.-clamp((radius-.75)/.25,0.,1.));float halo=.48*exp(-dot(v_position.xy,v_position.xy)*3.)*(1.-smoothstep(.7,1.,length(v_position.xy)));float a=shadow+halo*(1.-shadow);vec3 color=(vec3(.005,.004,.009)*shadow+vec3(.18,.19,.24)*halo*(1.-shadow))/max(a,.0001);gl_FragColor=vec4(color,a);return;}
+      if(v_kind>2.5&&v_kind<3.5){vec2 uv=v_position.xy*vec2(1.7,2.1);float radius=length(uv);float shadow=min(.9,.62+u_shadow*.06)*exp(-dot(uv,uv)*3.5)*(1.-clamp((radius-.75)/.25,0.,1.));float halo=(.48+u_shadow*.045)*exp(-dot(v_position.xy,v_position.xy)*3.)*(1.-smoothstep(.7,1.,length(v_position.xy)));float a=shadow+halo*(1.-shadow);vec3 color=(vec3(.005,.004,.009)*shadow+vec3(.18,.19,.24)*halo*(1.-shadow))/max(a,.0001);gl_FragColor=vec4(color,a);return;}
       vec3 n=normalize(v_normal);if(!gl_FrontFacing)n=-n;
       vec3 light=normalize(vec3(-.6,.85,1.3)),fill=normalize(vec3(.9,.1,.35)),back=normalize(vec3(-.35,.5,-1.));
       vec3 view=normalize(vec3(-v_position.xy*.12,4.5-v_position.z));
@@ -112,14 +123,16 @@
       float spec=max(0.,dot(n,normalize(light+view))),broad=pow(spec,18.),gloss=pow(spec,35.+u_polish*85.);
       float fresnel=pow(1.-max(0.,dot(n,view)),3.);
       vec3 base=v_kind<.5?u_body:v_kind<1.5?vec3(.29,.16,.075):vec3(.19,.38,.08);
+      if(v_kind>3.5){gl_FragColor=vec4(clamp(u_body*.58+.025+vec3(.03,.06,.08)*key+fresnel*.38+pow(spec,42.)*.9+broad*.13,0.,1.),1.);return;}
+      float detail=u_light/3.;
       float freckle=pow(max(0.,sin(v_position.x*91.)*sin(v_position.y*83.)*sin(v_position.z*71.)),12.)*.022*u_polish;
-      vec3 color=base*(.12+.12*(n.y*.5+.5)+key*.83+fillAmount*.16)+vec3(.46,.64,1.)*(backAmount*.08+fresnel*.07);
-      if(v_kind<.5)color+=vec3(1.,.91,.82)*(broad*.17+gloss*(.22+.6*u_polish))+freckle;
+      vec3 color=base*(.12+.12*(n.y*.5+.5)+key*(.83+detail*.15)+fillAmount*(.16+detail*.06))+vec3(.46,.64,1.)*(backAmount*(.08+detail*.08)+fresnel*(.07+detail*.05));
+      if(v_kind<.5)color+=vec3(1.,.91,.82)*(broad*.17+gloss*(.22+.6*u_polish+detail*.25))+freckle;
       else color+=gloss*.1;
       gl_FragColor=vec4(color,1.0);
     }`;
   function webglRenderer(canvas,gl){
-    let program,buffer,shadowBuffer,attributes,uniforms,level=-1,lost=false,disposed=false;
+    let program,buffer,shadowBuffer,attributes,uniforms,level=-1,wetLevel=-1,lost=false,disposed=false;
     function init(){
       function shader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s}
       const vs=shader(gl.VERTEX_SHADER,vertexSource),fs=shader(gl.FRAGMENT_SHADER,fragmentSource);
@@ -128,7 +141,7 @@
       gl.useProgram(program);buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
       attributes=[['a_position',3,0],['a_normal',3,12],['a_kind',1,24]].map(([name,size,offset])=>[gl.getAttribLocation(program,name),size,offset]);bind(buffer);
       shadowBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,shadowBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,0,0,0,1,3,1,-1,0,0,0,1,3,1,1,0,0,0,1,3,-1,-1,0,0,0,1,3,1,1,0,0,0,1,3,-1,1,0,0,0,1,3]),gl.STATIC_DRAW);bind(buffer);
-      uniforms=Object.fromEntries(['rotation','scale','offset','body','polish'].map(name=>[name,gl.getUniformLocation(program,'u_'+name)]));
+      uniforms=Object.fromEntries(['rotation','scale','offset','body','polish','light','shadow'].map(name=>[name,gl.getUniformLocation(program,'u_'+name)]));
       gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.clearColor(0,0,0,0);level=-1;lost=false;
     }
     function bind(target){gl.bindBuffer(gl.ARRAY_BUFFER,target);for(const[at,size,offset]of attributes){gl.enableVertexAttribArray(at);gl.vertexAttribPointer(at,size,gl.FLOAT,false,28,offset)}}
@@ -139,11 +152,12 @@
       if(disposed||lost)return;const b=canvas.getBoundingClientRect();if(!b.width||!b.height)return;
       const dpr=Math.min(Math.max(scope.devicePixelRatio||1,1.5),2),w=Math.round(b.width*dpr),h=Math.round(b.height*dpr);
       if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);
-      const current=Math.round(G.appleVolume(p)*10);if(current!==level){const data=createGeometry(current,false,p.cinematic);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);vertexCount=data.length/7;level=current}
+      const current=Math.round(G.appleVolume(p)*10);if(current!==level||wetLevel!==(p.waterLevel||0)){const data=createGeometry(current,false,p.cinematic,p.waterLevel||0);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);vertexCount=data.length/7;level=current;wetLevel=p.waterLevel||0}
       const objects=layout(b.width,b.height,p.appleCount,p.badOrbitAngle);
       // М’які проєктовані тіні малюються до моделей, щоб не закривати плоди.
+      gl.uniform1f(uniforms.shadow,p.shadowLevel||0);gl.uniform1f(uniforms.light,p.lightLevel||0);
       gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFuncSeparate(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);bind(shadowBuffer);
-      for(const o of objects){const shadow=shadowFootprint(o);gl.uniform2f(uniforms.scale,shadow.rx*1.7*2/b.width,shadow.ry*2.1*2/b.height);gl.uniform2f(uniforms.offset,shadow.x*2/b.width-1,1-shadow.y*2/b.height);gl.drawArrays(gl.TRIANGLES,0,6)}
+      for(const o of objects){const shadow=shadowFootprint(o,p.shadowLevel||0);gl.uniform2f(uniforms.scale,shadow.rx*1.7*2/b.width,shadow.ry*2.1*2/b.height);gl.uniform2f(uniforms.offset,shadow.x*2/b.width-1,1-shadow.y*2/b.height);gl.drawArrays(gl.TRIANGLES,0,6)}
       gl.disable(gl.BLEND);gl.enable(gl.DEPTH_TEST);bind(buffer);
       gl.uniform1f(uniforms.polish,G.appleVolume(p));
       objects.forEach((o,i)=>{
@@ -155,21 +169,21 @@
   }
   function canvasRenderer(canvas){
     const c=canvas.getContext('2d');canvas.dataset.renderer='canvas';
-    let level=-1,vertices,indices,projected,image,depthBuffer,last=-Infinity,disposed=false;
-    function prepare(current,cinematic){
-      const data=createGeometry(current,true,cinematic),unique=[],lookup=new Map(),triangles=[];
+    let level=-1,wetLevel=-1,vertices,indices,projected,image,depthBuffer,last=-Infinity,disposed=false;
+    function prepare(current,cinematic,water){
+      const data=createGeometry(current,true,cinematic,water),unique=[],lookup=new Map(),triangles=[];
       for(let i=0;i<data.length;i+=7){const vertex=data.slice(i,i+7),key=vertex.join(',');let index=lookup.get(key);if(index===undefined){index=unique.length/7;lookup.set(key,index);unique.push(...vertex)}triangles.push(index)}
-      vertices=new Float32Array(unique);indices=new Uint32Array(triangles);projected=new Float32Array(unique.length/7*8);level=current;
+      vertices=new Float32Array(unique);indices=new Uint32Array(triangles);projected=new Float32Array(unique.length/7*8);level=current;wetLevel=water;
     }
     return{draw(p,angle,now){
       if(disposed||!c||now-last<1000/(p.appleCount>3?24:40))return;last=now;
       const b=canvas.getBoundingClientRect();if(!b.width||!b.height)return;
       const dpr=Math.min(Math.max(scope.devicePixelRatio||1,p.cinematic||p.appleCount===1?1.5:1.25),2),w=Math.round(b.width*dpr),h=Math.round(b.height*dpr);
       if(canvas.width!==w||canvas.height!==h||!image){canvas.width=w;canvas.height=h;image=c.createImageData(w,h);depthBuffer=new Float32Array(w*h)}
-      image.data.fill(0);depthBuffer.fill(-Infinity);const pixels=image.data,current=Math.round(G.appleVolume(p)*10);if(level!==current)prepare(current,p.cinematic);
+      image.data.fill(0);depthBuffer.fill(-Infinity);const pixels=image.data,current=Math.round(G.appleVolume(p)*10);if(level!==current||wetLevel!==(p.waterLevel||0))prepare(current,p.cinematic,p.waterLevel||0);
       const objects=layout(b.width,b.height,p.appleCount,p.badOrbitAngle);
-      for(const o of objects){const sh=shadowFootprint(o),sx=sh.x*dpr,sy=sh.y*dpr,rx=sh.rx*dpr*1.7,ry=sh.ry*dpr*2.1;
-        for(let y=Math.max(0,Math.floor(sy-ry));y<=Math.min(h-1,Math.ceil(sy+ry));y++)for(let x=Math.max(0,Math.floor(sx-rx));x<=Math.min(w-1,Math.ceil(sx+rx));x++){const nx=(x+.5-sx)/rx,ny=(y+.5-sy)/ry,edge=clamp((Math.hypot(nx,ny)-.7)/.3),halo=.48*Math.exp(-(nx*nx+ny*ny)*3)*(1-edge*edge*(3-2*edge)),shadow=shadowOpacity(nx*1.7,ny*2.1),alpha=shadow+halo*(1-shadow),pixel=(y*w+x)*4;if(alpha>0){const old=pixels[pixel+3]/255,total=alpha+old*(1-alpha);for(let channel=0;channel<3;channel++){const color=SHADOW_COLOR[channel]*shadow+BOUNCE_COLOR[channel]*halo*(1-shadow);pixels[pixel+channel]=(color+pixels[pixel+channel]/255*old*(1-alpha))/total*255}pixels[pixel+3]=total*255}}
+      for(const o of objects){const sh=shadowFootprint(o,p.shadowLevel||0),sx=sh.x*dpr,sy=sh.y*dpr,rx=sh.rx*dpr*1.7,ry=sh.ry*dpr*2.1;
+        for(let y=Math.max(0,Math.floor(sy-ry));y<=Math.min(h-1,Math.ceil(sy+ry));y++)for(let x=Math.max(0,Math.floor(sx-rx));x<=Math.min(w-1,Math.ceil(sx+rx));x++){const nx=(x+.5-sx)/rx,ny=(y+.5-sy)/ry,edge=clamp((Math.hypot(nx,ny)-.7)/.3),halo=(.48+(p.shadowLevel||0)*.045)*Math.exp(-(nx*nx+ny*ny)*3)*(1-edge*edge*(3-2*edge)),shadow=shadowOpacity(nx*1.7,ny*2.1,p.shadowLevel||0),alpha=shadow+halo*(1-shadow),pixel=(y*w+x)*4;if(alpha>0){const old=pixels[pixel+3]/255,total=alpha+old*(1-alpha);for(let channel=0;channel<3;channel++){const color=SHADOW_COLOR[channel]*shadow+BOUNCE_COLOR[channel]*halo*(1-shadow);pixels[pixel+channel]=(color+pixels[pixel+channel]/255*old*(1-alpha))/total*255}pixels[pixel+3]=total*255}}
 
       }
       objects.forEach((o,index)=>{
@@ -177,7 +191,7 @@
         for(let i=0,k=0;i<vertices.length;i+=7,k+=8){
           const v=transform(r,[vertices[i],vertices[i+1],vertices[i+2]]);let n=transform(r,[vertices[i+3],vertices[i+4],vertices[i+5]]);const kind=vertices[i+6];
           if(kind>=1.5&&n[2]<0)n=n.map(x=>-x);
-          const color=shadeSurface(n,v,kind,body,level/10);
+          const color=shadeSurface(n,v,kind,body,level/10,p.lightLevel||0);
           const perspective=4.5/(4.5-v[2]);projected[k]=(o.x+v[0]*o.scale*perspective)*dpr;projected[k+1]=(o.y-v[1]*o.scale*perspective)*dpr;projected[k+2]=v[2];
           for(let channel=0;channel<3;channel++)projected[k+3+channel]=color[channel]*255;
           projected[k+6]=n[2];projected[k+7]=kind;

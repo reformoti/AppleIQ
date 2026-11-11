@@ -58,7 +58,8 @@
   }
   function modelRotation(p,angle,index=0){return p.direction==='free'?matrixMultiply(Orbit.matrix(p.freeRotation),rotation('clockwise',0)):rotation(p.direction,angle+index*.23)}
   function transform(m,p){return[m[0]*p[0]+m[3]*p[1]+m[6]*p[2],m[1]*p[0]+m[4]*p[1]+m[7]*p[2],m[2]*p[0]+m[5]*p[1]+m[8]*p[2]]}
-  function layout(width,height,count){
+  function layout(width,height,count,orbit){
+    if(Number.isFinite(orbit))return Array.from({length:count},(_,i)=>{const a=i*TAU/count+orbit;return{x:width/2+Math.cos(a)*Math.min(width*.38,600),y:height*.5+Math.sin(a)*height*.31,scale:Math.min(width*.055,height*.075,70)}});
     const columns=Math.ceil(Math.sqrt(count)),rows=Math.ceil(count/columns),cell=Math.min(count===1?200:140,width/(columns+.4),height/(rows+.2));
     return Array.from({length:count},(_,i)=>{const row=Math.floor(i/columns),n=Math.min(columns,count-row*columns);return{x:width/2+(i%columns-(n-1)/2)*cell,y:height/2+(row-(rows-1)/2)*cell+cell*.04,scale:cell*.38}});
   }
@@ -121,7 +122,7 @@
       if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);
       const current=Math.round(G.appleVolume(p)*10);if(current!==level){const data=createGeometry(current);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);vertexCount=data.length/7;level=current}
       gl.uniform1f(uniforms.polish,G.appleVolume(p));
-      layout(b.width,b.height,p.appleCount).forEach((o,i)=>{
+      layout(b.width,b.height,p.appleCount,p.badOrbitAngle).forEach((o,i)=>{
         gl.uniformMatrix3fv(uniforms.rotation,false,new Float32Array(modelRotation(p,angle,i)));
         gl.uniform2f(uniforms.scale,o.scale*2/b.width,o.scale*2/b.height);gl.uniform2f(uniforms.offset,o.x*2/b.width-1,1-o.y*2/b.height);
         gl.uniform3fv(uniforms.body,new Float32Array(bodyColor(p,now,i)));gl.drawArrays(gl.TRIANGLES,0,vertexCount);
@@ -143,7 +144,7 @@
       const dpr=Math.min(scope.devicePixelRatio||1,1.5),w=Math.round(b.width*dpr),h=Math.round(b.height*dpr);
       if(canvas.width!==w||canvas.height!==h||!image){canvas.width=w;canvas.height=h;image=c.createImageData(w,h);depthBuffer=new Float32Array(w*h)}
       image.data.fill(0);depthBuffer.fill(-Infinity);const pixels=image.data,current=Math.round(G.appleVolume(p)*10);if(level!==current)prepare(current);
-      layout(b.width,b.height,p.appleCount).forEach((o,index)=>{
+      layout(b.width,b.height,p.appleCount,p.badOrbitAngle).forEach((o,index)=>{
         const r=modelRotation(p,angle,index),body=bodyColor(p,now,index);
         for(let i=0,k=0;i<vertices.length;i+=7,k+=8){
           const v=transform(r,[vertices[i],vertices[i+1],vertices[i+2]]);let n=transform(r,[vertices[i+3],vertices[i+4],vertices[i+5]]);const kind=vertices[i+6];
@@ -175,3 +176,4 @@
   }
   const api=Object.freeze({svg,create,createGeometry,rotation,modelRotation,transform});scope.AppleFruit=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
+

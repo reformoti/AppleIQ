@@ -3,7 +3,7 @@
 (() => {
   const KEY='apple-iq-story-01', DURATION=36, reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const G=window.AppleProgression;
-  let fruitRenderer=null,rotationControl=null;
+  let fruitRenderer=null,rotationControl=null,stopBadAudioEnd=null;
   let progress=null, root, filmFrame, trainingFrame, lifeFrame, shopOpen=false, directionExpanded=false, previousTime=0, lastSave=0, transitionTimer;
   const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
   const ease=v=>{v=clamp(v);return v*v*(3-2*v)};
@@ -12,9 +12,9 @@
   function save(){if(!progress)return;try{localStorage.setItem(KEY,JSON.stringify(progress))}catch{}}
   function load(){try{const p=JSON.parse(localStorage.getItem(KEY)||'null');if(!valid(p))return null;G.normalise(p);p.eventTime=Number.isFinite(p.eventTime)&&p.eventTime>=0?Math.min(p.eventTime,100):0;return p}catch{return null}}
   function mount(){if(root)return;document.querySelector('.shell').hidden=true;document.body.classList.add('story-mode');root=document.createElement('div');root.id='story-root';document.body.append(root)}
-  function restore(){const p=load();if(!p)return false;progress=p;window.AppleAudio?.setTrack(p.phase==='bad-end'?3:p.advanced||p.phase==='resolve'?2:1);if(p.retake)return false;mount();if(quietDayAvailable()&&p.phase==='mind'&&p.step===5)startPhase('quiet-day');else showPhase();return true}
+  function restore(){const p=load();if(!p)return false;progress=p;if(p.phase!=='bad-end')window.AppleAudio?.setTrack(p.advanced||p.phase==='resolve'?2:1);if(p.retake)return false;mount();if(quietDayAvailable()&&p.phase==='mind'&&p.step===5)startPhase('quiet-day');else showPhase();return true}
   function begin(iq){if(progress)return;progress=G.normalise({version:1,iq,phase:'film',step:0,filmTime:0,potential:0,eventTime:0});window.AppleAudio?.setTrack(1);save();mount();showFilm()}
-  function cleanup(){rotationControl?.dispose();rotationControl=null;fruitRenderer?.dispose();fruitRenderer=null;cancelAnimationFrame(filmFrame);cancelAnimationFrame(trainingFrame);cancelAnimationFrame(lifeFrame);clearTimeout(transitionTimer);previousTime=0}
+  function cleanup(){stopBadAudioEnd?.();stopBadAudioEnd=null;rotationControl?.dispose();rotationControl=null;fruitRenderer?.dispose();fruitRenderer=null;cancelAnimationFrame(filmFrame);cancelAnimationFrame(trainingFrame);cancelAnimationFrame(lifeFrame);clearTimeout(transitionTimer);previousTime=0}
   function showFilm(){cleanup();root.className='film-root';root.innerHTML=`<div class="film-top"><span>РОЗДІЛ 01</span><span>ПОЧАТОК</span></div><canvas id="film-canvas" role="img" aria-label="Короткий мультфільм: хлопчик бачить низький IQ, тікає від сміху інших, удома читає Apple=IQ та намагається уявити яблуко."></canvas><div class="film-bottom"><p id="film-subtitle" aria-live="polite"></p><button class="film-skip" id="film-skip">Пропустити сцену</button></div><div class="film-progress"><div id="film-progress-fill"></div></div>`;document.querySelector('#film-skip').onclick=finishFilm;const canvas=document.querySelector('#film-canvas'),ctx=canvas.getContext('2d');let lastSubtitle='';
     function animate(now){if(!previousTime)previousTime=now;const dt=document.hidden||document.body.classList.contains('settings-open')?0:Math.min((now-previousTime)/1000,1);previousTime=now;progress.filmTime=Math.min(DURATION,progress.filmTime+dt);const t=progress.filmTime;drawFilm(ctx,canvas,t,progress.iq);const subtitle=subtitleAt(t,progress.iq);if(subtitle!==lastSubtitle){document.querySelector('#film-subtitle').textContent=subtitle;lastSubtitle=subtitle}document.querySelector('#film-progress-fill').style.width=t/DURATION*100+'%';if(now-lastSave>2000){save();lastSave=now}if(t>=DURATION){finishFilm();return}filmFrame=requestAnimationFrame(animate)}filmFrame=requestAnimationFrame(animate)
   }
@@ -145,12 +145,14 @@
   function beginBadEnd(){
     if(progress)return;
     progress=G.normalise({version:1,iq:160,phase:'bad-end',step:0,filmTime:0,potential:0,eventTime:0});
-    save();mount();window.AppleAudio?.setTrack(3);showBadEnd();
+    save();mount();showBadEnd();
   }
   function showBadEnd(){
     cleanup();root.className='bad-end-root';
-    root.innerHTML='<canvas id="bad-room" class="bad-room" role="img" aria-label="У школі результат 160 IQ виходить за межі шкали. Однокласники вражені."></canvas><div class="bad-shade" aria-hidden="true"></div><img class="bad-hero" src="assets/bad-end-character.webp" alt="Згорнута істота з порожніми очима" decoding="async"><canvas id="bad-apples" class="bad-apples" role="img" aria-label="Дев’ять яблук обертаються дуже швидко"></canvas><p class="bad-caption" aria-live="polite"></p><div class="bad-title" aria-label="Bad End">Bad End</div><button class="bad-next" id="bad-next" hidden aria-label="Далі — вийти з гри">Далі <span aria-hidden="true">↗</span></button>';
-    root.querySelector('#bad-next').onclick=()=>{save();cleanup();window.AppleBadEnd.exit(window.AppleAudio,window.location)};
+    root.innerHTML='<canvas id="bad-room" class="bad-room" role="img" aria-label="У школі результат 160 IQ виходить за межі шкали. Однокласники вражені."></canvas><div class="bad-shade" aria-hidden="true"></div><img class="bad-hero" src="assets/bad-end-character.webp" alt="Згорнута істота з порожніми очима" decoding="async"><img class="bad-glitch bad-glitch-red" src="assets/bad-end-character.webp" alt="" aria-hidden="true"><img class="bad-glitch bad-glitch-cyan" src="assets/bad-end-character.webp" alt="" aria-hidden="true"><div class="bad-iq" aria-label="IQ зашкалює"><strong id="bad-iq-value">161</strong><span>IQ</span></div><canvas id="bad-apples" class="bad-apples" role="img" aria-label="Дев’ять яблук обертаються дуже швидко"></canvas><p class="bad-caption" aria-live="polite"></p><div class="bad-title" aria-label="Bad End">Bad End</div>';
+    // Вихід прив’язаний до справжнього ended, а не до тривалості анімації чи помилки завантаження.
+    stopBadAudioEnd=window.AppleAudio?.onEnded(3,()=>{save();cleanup();window.AppleBadEnd.exit(window.AppleAudio,window.location)});
+    window.AppleAudio?.setTrack(3,{startAt:progress.badAudioTime||0});
     const room=root.querySelector('#bad-room'),c=room.getContext('2d');fruitRenderer=window.AppleFruit.create(root.querySelector('#bad-apples'));
     const apples=G.normalise({iq:160,qualityLevel:42,appleCount:9,directions:['clockwise','diagonal'],direction:'diagonal',potential:0});
     let spin=progress.eventTime,lastReaction='';
@@ -159,7 +161,15 @@
       progress.eventTime=Math.min(window.AppleBadEnd.DURATION,progress.eventTime+dt);spin+=dt;
       const t=progress.eventTime,scene=window.AppleBadEnd.frame(t);drawBadRoom(c,room,t,scene);
       root.querySelector('.bad-shade').style.opacity=scene.shade;root.querySelector('.bad-hero').style.opacity=scene.hero;root.querySelector('#bad-apples').style.opacity=scene.apples;
-      root.querySelector('.bad-title').style.opacity=scene.title;root.querySelector('#bad-next').hidden=!scene.ready;
+      root.querySelector('.bad-title').style.opacity=scene.title;
+      const distortion=window.AppleBadEnd.distortion(spin,reduced),hero=root.querySelector('.bad-hero');
+      const pose=`translate(calc(-50% + ${distortion.x}px),${distortion.y}px) rotate(${distortion.angle}deg) scale(${distortion.scaleX},${distortion.scaleY}) skewX(${distortion.skew}deg)`;hero.style.transform=pose;
+      root.querySelector('.bad-glitch-red').style.transform=pose+` translateX(${6*distortion.glitch}px)`;
+      root.querySelector('.bad-glitch-cyan').style.transform=pose+` translateX(${-7*distortion.glitch}px)`;
+      root.querySelector('.bad-glitch-red').style.opacity=scene.hero*distortion.glitch*.6;
+      root.querySelector('.bad-glitch-cyan').style.opacity=scene.hero*distortion.glitch*.5;
+      root.querySelector('#bad-iq-value').textContent=scene.iq;root.querySelector('.bad-iq').style.opacity=1-ease((t-12)/3);
+      root.classList.toggle('bad-paused',paused);progress.badAudioTime=window.AppleAudio?.getPosition?.()||0;
       const caption=root.querySelector('.bad-caption');caption.style.opacity=1-scene.shade;if(scene.reaction!==lastReaction){caption.textContent=scene.reaction;lastReaction=scene.reaction}
       if(!paused)fruitRenderer.draw({...apples,badOrbitAngle:spin*.9},spin*9,now);
       if(now-lastSave>1000){save();lastSave=now}lifeFrame=requestAnimationFrame(render);

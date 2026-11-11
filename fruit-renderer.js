@@ -1,9 +1,11 @@
 'use strict';
-// Процедурна геометрія та освітлення; зовнішні моделі й текстури не потрібні.
+// Об’ємна геометрія, текстура шкірки та студійне освітлення.
 ((scope)=>{
   const G=scope.AppleProgression||(typeof require==='function'?require('./progression.js'):null);
   const Orbit=scope.AppleOrbit||(typeof require==='function'?require('./rotation-controls.js'):null);
   const TAU=Math.PI*2,clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+  const skin={image:null,pixels:null,width:0,height:0,version:0};
+  if(typeof scope.Image==='function'&&scope.document){const image=new scope.Image();image.onload=()=>{skin.image=image;skin.version++;try{const c=scope.document.createElement('canvas');c.width=image.naturalWidth;c.height=image.naturalHeight;const ctx=c.getContext('2d');ctx.drawImage(image,0,0);skin.pixels=ctx.getImageData(0,0,c.width,c.height).data;skin.width=c.width;skin.height=c.height}catch{}};image.src='assets/apple-skin.webp'}
   function svg(p,index=0){
     const form=G.appleForm(p),points=[];
     for(let i=0;i<G.sides(p);i++){
@@ -20,7 +22,7 @@
   const minus=(a,b)=>a.map((x,i)=>x-b[i]);
   function surface(v,u,depth){
     const sn=Math.sin(v),r=sn*(.92+.13*Math.cos(v))*(1+.035*Math.cos(u*5)*sn);
-    return[r*Math.cos(u),Math.cos(v)-.16*Math.exp(-v*v*14)+.045*Math.exp(-((Math.PI-v)**2)*14),r*Math.sin(u)*depth];
+    return[r*Math.cos(u)*(1+.022*Math.sin(u*3+v)),Math.cos(v)-.26*Math.exp(-v*v*10)+.075*Math.exp(-((Math.PI-v)**2)*12)+.012*Math.sin(u*3)*sn*sn,r*Math.sin(u)*depth];
   }
   function surfaceNormal(v,u,depth){
     const e=.001,du=minus(surface(v,u+e,depth),surface(v,u-e,depth));
@@ -36,7 +38,7 @@
       const params=[[j,i],[j,i+1],[j+1,i+1],[j+1,i]].map(([a,b])=>[.0001+a*(Math.PI-.0002)/latitude,b*TAU/longitude]);
       quad(params.map(([v,u])=>surface(v,u,depth)),params.map(([v,u])=>surfaceNormal(v,u,depth)),0);
     }
-    const stemPoint=(t,u)=>[.025+t*.13+.036*Math.cos(u),.84+t*.35,.036*Math.sin(u)*depth];
+    const stemPoint=(t,u)=>[.025+t*.13+.036*Math.cos(u),.75+t*.4,.036*Math.sin(u)*depth];
     for(let j=0;j<8;j++)for(let i=0;i<12;i++){
       const params=[[j,i],[j+1,i],[j+1,i+1],[j,i+1]].map(([a,b])=>[a/8,b*TAU/12]);
       quad(params.map(([t,u])=>stemPoint(t,u)),params.map(([,u])=>normal([Math.cos(u),-.13,Math.sin(u)/depth])),1);
@@ -49,9 +51,9 @@
     // Підняті над шкіркою об’ємні краплі; геометрія рухається разом із плодом.
     const drops=[0,12,22,34][clamp(Math.round(waterLevel),0,3)],rings=low?6:8,segments=low?10:14;
     for(let d=0;d<drops;d++){
-      const v=.23+Math.acos(1-2*(d+.5)/drops)*.85,u=d*2.39996323,point=surface(v,u,depth),out=surfaceNormal(v,u,depth),radius=.04+(d%4)*.009,center=point.map((x,i)=>x+out[i]*radius*.55);
+      const v=.23+Math.acos(1-2*(d+.5)/drops)*.85,u=d*2.39996323,point=surface(v,u,depth),out=surfaceNormal(v,u,depth),radius=.027+(d%5)*.006,center=point.map((x,i)=>x+out[i]*radius*.11);
       const bead=(a,b)=>[Math.sin(a)*Math.cos(b),Math.cos(a),Math.sin(a)*Math.sin(b)];
-      for(let j=0;j<rings;j++)for(let i=0;i<segments;i++){const normals=[[j,i],[j,i+1],[j+1,i+1],[j+1,i]].map(([a,b])=>bead(.0001+a*(Math.PI-.0002)/rings,b*TAU/segments));quad(normals.map(n=>center.map((x,k)=>x+n[k]*radius)),normals,4)}
+      for(let j=0;j<rings;j++)for(let i=0;i<segments;i++){const normals=[[j,i],[j,i+1],[j+1,i+1],[j+1,i]].map(([a,b])=>bead(.0001+a*(Math.PI-.0002)/rings,b*TAU/segments));quad(normals.map(n=>center.map((x,k)=>x+(n[k]-.6*out[k]*(n[0]*out[0]+n[1]*out[1]+n[2]*out[2]))*radius)),normals.map(n=>normal(n.map((x,k)=>x+1.5*out[k]*(n[0]*out[0]+n[1]*out[1]+n[2]*out[2])))),4)}
     }
     return new Float32Array(data);
   }
@@ -67,9 +69,11 @@
   function transform(m,p){return[m[0]*p[0]+m[3]*p[1]+m[6]*p[2],m[1]*p[0]+m[4]*p[1]+m[7]*p[2],m[2]*p[0]+m[5]*p[1]+m[8]*p[2]]}
   function layout(width,height,count,orbit){
     if(Number.isFinite(orbit))return Array.from({length:count},(_,i)=>{const a=i*TAU/count+orbit;return{x:width/2+Math.cos(a)*Math.min(width*.38,600),y:height*.5+Math.sin(a)*height*.31,scale:Math.min(width*.055,height*.075,70)}});
-    const columns=Math.ceil(Math.sqrt(count)),rows=Math.ceil(count/columns),cell=Math.min(count===1?200:140,width/(columns+.4),height/(rows+.2));
+    const columns=Math.ceil(Math.sqrt(count)),rows=Math.ceil(count/columns),cell=Math.min(count===1?280:140,width/(columns+.4),height/(rows+.2));
     return Array.from({length:count},(_,i)=>{const row=Math.floor(i/columns),n=Math.min(columns,count-row*columns);return{x:width/2+(i%columns-(n-1)/2)*cell,y:height/2+(row-(rows-1)/2)*cell+cell*.04,scale:cell*.38}});
   }
+  function shakeOffset(p,now,index=0,paused=false){const level=Math.max(0,Math.min(24,p.shakeLevel||0));if(!level||paused||p.reduceMotion)return{x:0,y:0};const amplitude=.6+level*.17,t=now/1000;return{x:(Math.sin(t*43+index*2)+Math.sin(t*67+index))*.5*amplitude,y:Math.sin(t*53+index*3)*amplitude}}
+  function layoutFor(p,width,height,now=0){const objects=layout(width,height,p.appleCount,p.badOrbitAngle);return objects.map((o,i)=>{const point=p.layoutUnlocked&&!Number.isFinite(p.badOrbitAngle)?p.applePositions?.[i]:null,shake=shakeOffset(p,now,i,p.arranging);if(point){o.x=clamp(point.x*width,o.scale*1.25,width-o.scale*1.25);o.y=clamp(point.y*height,o.scale*1.4,height-o.scale*1.4)}return{...o,x:o.x+shake.x,y:o.y+shake.y}})}
   function bodyColor(p,now,index){if(!p.rainbow)return[.75,.035,.055];const period=p.cinematic?6000:10000,h=((now/period+index/Math.max(1,p.appleCount))%1+1)%1,k=n=>(n+h*6)%6;return[5,3,1].map(n=>.92*(1-.94*Math.max(0,Math.min(k(n),4-k(n),1))))}
   // Фіксована студійна схема: тепле верхнє світло, холодне заповнення та контровий обідок.
   const KEY_LIGHT=normal([-.6,.85,1.3]),FILL_LIGHT=normal([.9,.1,.35]),RIM_LIGHT=normal([-.35,.5,-1]);
@@ -81,7 +85,7 @@
     const fresnel=Math.pow(1-Math.max(0,dot(n,view)),3),spec=Math.max(0,dot(n,half));
     const broad=Math.pow(spec,18),gloss=Math.pow(spec,35+polish*85),ambient=.12+.12*(n[1]*.5+.5);
     const base=kind<.5?body:kind<1.5?[.29,.16,.075]:[.19,.38,.08];
-    if(kind>3.5)return body.map((v,i)=>clamp(v*.58+.025+[.03,.06,.08][i]*key+fresnel*.38+Math.pow(spec,42)*.9+broad*.13));
+    if(kind>3.5)return body.map((v,i)=>clamp(v*(.28+key*.3)+[.025,.04,.055][i]+fresnel*.5+Math.pow(spec,76)*1.4+broad*.08));
     const detail=clamp(lightLevel,0,3)/3;
     const freckle=Math.pow(Math.max(0,Math.sin(position[0]*91)*Math.sin(position[1]*83)*Math.sin(position[2]*71)),12)*.022*polish;
     return base.map((v,i)=>clamp(v*(ambient+key*(.83+detail*.15)+fill*(.16+detail*.06))+[.46,.64,1][i]*(back*(.08+detail*.08)+fresnel*(.07+detail*.05))+(kind<.5?[1,.91,.82][i]*(broad*.17+gloss*(.22+.6*polish+detail*.25))+freckle:gloss*.1)));
@@ -96,12 +100,13 @@
     uniform vec2 u_scale;
     uniform vec2 u_offset;
     varying vec3 v_position;
+    varying vec3 v_surface;
     varying vec3 v_normal;
     varying float v_kind;
     void main(){
-      if(a_kind>2.5&&a_kind<3.5){v_position=a_position;v_normal=vec3(0.,0.,1.);v_kind=a_kind;gl_Position=vec4(u_offset+a_position.xy*u_scale,.9,1.);return;}
+      if(a_kind>2.5&&a_kind<3.5){v_position=a_position;v_surface=a_position;v_normal=vec3(0.,0.,1.);v_kind=a_kind;gl_Position=vec4(u_offset+a_position.xy*u_scale,.9,1.);return;}
       vec3 p=u_rotation*a_position;
-      v_position=p;v_normal=u_rotation*a_normal;v_kind=a_kind;
+      v_position=p;v_surface=a_position;v_normal=u_rotation*a_normal;v_kind=a_kind;
       float perspective=4.5/(4.5-p.z);
       gl_Position=vec4(u_offset+p.xy*u_scale*perspective,-p.z*.25,1.0);
     }`;
@@ -111,7 +116,12 @@
     uniform float u_polish;
     uniform float u_light;
     uniform float u_shadow;
+    uniform sampler2D u_skin;
+    uniform float u_skinReady;
+    uniform float u_depth;
+    uniform float u_rainbow;
     varying vec3 v_position;
+    varying vec3 v_surface;
     varying vec3 v_normal;
     varying float v_kind;
     void main(){
@@ -123,7 +133,8 @@
       float spec=max(0.,dot(n,normalize(light+view))),broad=pow(spec,18.),gloss=pow(spec,35.+u_polish*85.);
       float fresnel=pow(1.-max(0.,dot(n,view)),3.);
       vec3 base=v_kind<.5?u_body:v_kind<1.5?vec3(.29,.16,.075):vec3(.19,.38,.08);
-      if(v_kind>3.5){gl_FragColor=vec4(clamp(u_body*.58+.025+vec3(.03,.06,.08)*key+fresnel*.38+pow(spec,42.)*.9+broad*.13,0.,1.),1.);return;}
+      if(v_kind<.5&&u_skinReady>.5){vec2 uv=vec2(atan(v_surface.z/max(.1,u_depth),v_surface.x)/6.2831853+.5,acos(clamp(v_surface.y,-1.,1.))/3.14159265);vec3 photo=texture2D(u_skin,uv).rgb;base=mix(photo,u_body*(.32+.8*max(photo.r,max(photo.g,photo.b))),u_rainbow);}
+      if(v_kind>3.5){gl_FragColor=vec4(clamp(u_body*(.28+key*.3)+vec3(.025,.04,.055)+fresnel*.5+pow(spec,76.)*1.4+broad*.08,0.,1.),1.);return;}
       float detail=u_light/3.;
       float freckle=pow(max(0.,sin(v_position.x*91.)*sin(v_position.y*83.)*sin(v_position.z*71.)),12.)*.022*u_polish;
       vec3 color=base*(.12+.12*(n.y*.5+.5)+key*(.83+detail*.15)+fillAmount*(.16+detail*.06))+vec3(.46,.64,1.)*(backAmount*(.08+detail*.08)+fresnel*(.07+detail*.05));
@@ -132,7 +143,7 @@
       gl_FragColor=vec4(color,1.0);
     }`;
   function webglRenderer(canvas,gl){
-    let program,buffer,shadowBuffer,attributes,uniforms,level=-1,wetLevel=-1,lost=false,disposed=false;
+    let program,buffer,shadowBuffer,attributes,skinTexture,skinVersion=-1,uniforms,level=-1,wetLevel=-1,lost=false,disposed=false;
     function init(){
       function shader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s}
       const vs=shader(gl.VERTEX_SHADER,vertexSource),fs=shader(gl.FRAGMENT_SHADER,fragmentSource);
@@ -141,7 +152,8 @@
       gl.useProgram(program);buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
       attributes=[['a_position',3,0],['a_normal',3,12],['a_kind',1,24]].map(([name,size,offset])=>[gl.getAttribLocation(program,name),size,offset]);bind(buffer);
       shadowBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,shadowBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,0,0,0,1,3,1,-1,0,0,0,1,3,1,1,0,0,0,1,3,-1,-1,0,0,0,1,3,1,1,0,0,0,1,3,-1,1,0,0,0,1,3]),gl.STATIC_DRAW);bind(buffer);
-      uniforms=Object.fromEntries(['rotation','scale','offset','body','polish','light','shadow'].map(name=>[name,gl.getUniformLocation(program,'u_'+name)]));
+      uniforms=Object.fromEntries(['rotation','scale','offset','body','polish','light','shadow','skin','skinReady','depth','rainbow'].map(name=>[name,gl.getUniformLocation(program,'u_'+name)]));
+      skinTexture=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,skinTexture);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([190,12,20,255]));gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);skinVersion=-1;
       gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.clearColor(0,0,0,0);level=-1;lost=false;
     }
     function bind(target){gl.bindBuffer(gl.ARRAY_BUFFER,target);for(const[at,size,offset]of attributes){gl.enableVertexAttribArray(at);gl.vertexAttribPointer(at,size,gl.FLOAT,false,28,offset)}}
@@ -153,19 +165,20 @@
       const dpr=Math.min(Math.max(scope.devicePixelRatio||1,1.5),2),w=Math.round(b.width*dpr),h=Math.round(b.height*dpr);
       if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);
       const current=Math.round(G.appleVolume(p)*10);if(current!==level||wetLevel!==(p.waterLevel||0)){const data=createGeometry(current,false,p.cinematic,p.waterLevel||0);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);vertexCount=data.length/7;level=current;wetLevel=p.waterLevel||0}
-      const objects=layout(b.width,b.height,p.appleCount,p.badOrbitAngle);
+      const objects=layoutFor(p,b.width,b.height,now);
       // М’які проєктовані тіні малюються до моделей, щоб не закривати плоди.
       gl.uniform1f(uniforms.shadow,p.shadowLevel||0);gl.uniform1f(uniforms.light,p.lightLevel||0);
       gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFuncSeparate(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);bind(shadowBuffer);
       for(const o of objects){const shadow=shadowFootprint(o,p.shadowLevel||0);gl.uniform2f(uniforms.scale,shadow.rx*1.7*2/b.width,shadow.ry*2.1*2/b.height);gl.uniform2f(uniforms.offset,shadow.x*2/b.width-1,1-shadow.y*2/b.height);gl.drawArrays(gl.TRIANGLES,0,6)}
       gl.disable(gl.BLEND);gl.enable(gl.DEPTH_TEST);bind(buffer);
+      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,skinTexture);if(skin.image&&skinVersion!==skin.version){gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,skin.image);skinVersion=skin.version}gl.uniform1i(uniforms.skin,0);gl.uniform1f(uniforms.skinReady,skinVersion>=0?1:0);gl.uniform1f(uniforms.depth,G.appleVolume(p));gl.uniform1f(uniforms.rainbow,p.rainbow?1:0);
       gl.uniform1f(uniforms.polish,G.appleVolume(p));
       objects.forEach((o,i)=>{
         gl.uniformMatrix3fv(uniforms.rotation,false,new Float32Array(modelRotation(p,angle,i)));
         gl.uniform2f(uniforms.scale,o.scale*2/b.width,o.scale*2/b.height);gl.uniform2f(uniforms.offset,o.x*2/b.width-1,1-o.y*2/b.height);
         gl.uniform3fv(uniforms.body,new Float32Array(bodyColor(p,now,i)));gl.drawArrays(gl.TRIANGLES,0,vertexCount);
       });
-    },dispose(){disposed=true;canvas.removeEventListener('webglcontextlost',onLost);canvas.removeEventListener('webglcontextrestored',onRestored);gl.deleteBuffer(buffer);gl.deleteBuffer(shadowBuffer);gl.deleteProgram(program);gl.getExtension('WEBGL_lose_context')?.loseContext()}};
+    },dispose(){disposed=true;canvas.removeEventListener('webglcontextlost',onLost);canvas.removeEventListener('webglcontextrestored',onRestored);gl.deleteBuffer(buffer);gl.deleteBuffer(shadowBuffer);gl.deleteTexture(skinTexture);gl.deleteProgram(program);gl.getExtension('WEBGL_lose_context')?.loseContext()}};
   }
   function canvasRenderer(canvas){
     const c=canvas.getContext('2d');canvas.dataset.renderer='canvas';
@@ -173,7 +186,7 @@
     function prepare(current,cinematic,water){
       const data=createGeometry(current,true,cinematic,water),unique=[],lookup=new Map(),triangles=[];
       for(let i=0;i<data.length;i+=7){const vertex=data.slice(i,i+7),key=vertex.join(',');let index=lookup.get(key);if(index===undefined){index=unique.length/7;lookup.set(key,index);unique.push(...vertex)}triangles.push(index)}
-      vertices=new Float32Array(unique);indices=new Uint32Array(triangles);projected=new Float32Array(unique.length/7*8);level=current;wetLevel=water;
+      vertices=new Float32Array(unique);indices=new Uint32Array(triangles);projected=new Float32Array(unique.length/7*10);level=current;wetLevel=water;
     }
     return{draw(p,angle,now){
       if(disposed||!c||now-last<1000/(p.appleCount>3?24:40))return;last=now;
@@ -181,31 +194,33 @@
       const dpr=Math.min(Math.max(scope.devicePixelRatio||1,p.cinematic||p.appleCount===1?1.5:1.25),2),w=Math.round(b.width*dpr),h=Math.round(b.height*dpr);
       if(canvas.width!==w||canvas.height!==h||!image){canvas.width=w;canvas.height=h;image=c.createImageData(w,h);depthBuffer=new Float32Array(w*h)}
       image.data.fill(0);depthBuffer.fill(-Infinity);const pixels=image.data,current=Math.round(G.appleVolume(p)*10);if(level!==current||wetLevel!==(p.waterLevel||0))prepare(current,p.cinematic,p.waterLevel||0);
-      const objects=layout(b.width,b.height,p.appleCount,p.badOrbitAngle);
+      const objects=layoutFor(p,b.width,b.height,now);
       for(const o of objects){const sh=shadowFootprint(o,p.shadowLevel||0),sx=sh.x*dpr,sy=sh.y*dpr,rx=sh.rx*dpr*1.7,ry=sh.ry*dpr*2.1;
         for(let y=Math.max(0,Math.floor(sy-ry));y<=Math.min(h-1,Math.ceil(sy+ry));y++)for(let x=Math.max(0,Math.floor(sx-rx));x<=Math.min(w-1,Math.ceil(sx+rx));x++){const nx=(x+.5-sx)/rx,ny=(y+.5-sy)/ry,edge=clamp((Math.hypot(nx,ny)-.7)/.3),halo=(.48+(p.shadowLevel||0)*.045)*Math.exp(-(nx*nx+ny*ny)*3)*(1-edge*edge*(3-2*edge)),shadow=shadowOpacity(nx*1.7,ny*2.1,p.shadowLevel||0),alpha=shadow+halo*(1-shadow),pixel=(y*w+x)*4;if(alpha>0){const old=pixels[pixel+3]/255,total=alpha+old*(1-alpha);for(let channel=0;channel<3;channel++){const color=SHADOW_COLOR[channel]*shadow+BOUNCE_COLOR[channel]*halo*(1-shadow);pixels[pixel+channel]=(color+pixels[pixel+channel]/255*old*(1-alpha))/total*255}pixels[pixel+3]=total*255}}
 
       }
       objects.forEach((o,index)=>{
         const r=modelRotation(p,angle,index),body=bodyColor(p,now,index);
-        for(let i=0,k=0;i<vertices.length;i+=7,k+=8){
+        for(let i=0,k=0;i<vertices.length;i+=7,k+=10){
           const v=transform(r,[vertices[i],vertices[i+1],vertices[i+2]]);let n=transform(r,[vertices[i+3],vertices[i+4],vertices[i+5]]);const kind=vertices[i+6];
           if(kind>=1.5&&n[2]<0)n=n.map(x=>-x);
           const color=shadeSurface(n,v,kind,body,level/10,p.lightLevel||0);
           const perspective=4.5/(4.5-v[2]);projected[k]=(o.x+v[0]*o.scale*perspective)*dpr;projected[k+1]=(o.y-v[1]*o.scale*perspective)*dpr;projected[k+2]=v[2];
           for(let channel=0;channel<3;channel++)projected[k+3+channel]=color[channel]*255;
-          projected[k+6]=n[2];projected[k+7]=kind;
+          projected[k+6]=n[2];projected[k+7]=kind;projected[k+8]=Math.atan2(vertices[i+2]/Math.max(.1,level/10),vertices[i])/TAU+.5;projected[k+9]=Math.acos(clamp(vertices[i+1],-1,1))/Math.PI;
         }
         for(let at=0;at<indices.length;at+=3){
-          const a=indices[at]*8,b=indices[at+1]*8,d=indices[at+2]*8;
+          const a=indices[at]*10,b=indices[at+1]*10,d=indices[at+2]*10;
           if(projected[a+7]<1.5&&projected[a+6]+projected[b+6]+projected[d+6]<0)continue;
           const ax=projected[a],ay=projected[a+1],bx=projected[b],by=projected[b+1],cx=projected[d],cy=projected[d+1];
           const denominator=(by-cy)*(ax-cx)+(cx-bx)*(ay-cy);if(Math.abs(denominator)<.00001)continue;
           const left=Math.max(0,Math.floor(Math.min(ax,bx,cx))),right=Math.min(w-1,Math.ceil(Math.max(ax,bx,cx))),top=Math.max(0,Math.floor(Math.min(ay,by,cy))),bottom=Math.min(h-1,Math.ceil(Math.max(ay,by,cy)));
           const sx=(by-cy)/denominator,sy=(cx-bx)/denominator,tx=(cy-ay)/denominator,ty=(ax-cx)/denominator;
+          let au=projected[a+8],bu=projected[b+8],cu=projected[d+8];if(Math.max(au,bu,cu)-Math.min(au,bu,cu)>.5){if(au<.5)au++;if(bu<.5)bu++;if(cu<.5)cu++}
+          const av=projected[a+9],bv=projected[b+9],cv=projected[d+9],bodyMin=Math.min(...body),bodyMax=Math.max(...body);
           for(let y=top;y<=bottom;y++){
             let u=sx*(left+.5-cx)+sy*(y+.5-cy),v=tx*(left+.5-cx)+ty*(y+.5-cy);
-            for(let x=left;x<=right;x++,u+=sx,v+=tx){const q=1-u-v;if(u<-.00001||v<-.00001||q<-.00001)continue;const position=y*w+x,z=u*projected[a+2]+v*projected[b+2]+q*projected[d+2];if(z<depthBuffer[position])continue;depthBuffer[position]=z;const pixel=position*4;for(let channel=0;channel<3;channel++)pixels[pixel+channel]=u*projected[a+3+channel]+v*projected[b+3+channel]+q*projected[d+3+channel];pixels[pixel+3]=255}
+            for(let x=left;x<=right;x++,u+=sx,v+=tx){const q=1-u-v;if(u<-.00001||v<-.00001||q<-.00001)continue;const position=y*w+x,z=u*projected[a+2]+v*projected[b+2]+q*projected[d+2];if(z<depthBuffer[position])continue;depthBuffer[position]=z;const pixel=position*4;for(let channel=0;channel<3;channel++)pixels[pixel+channel]=u*projected[a+3+channel]+v*projected[b+3+channel]+q*projected[d+3+channel];if(projected[a+7]<.5&&skin.pixels){const texU=((u*au+v*bu+q*cu)%1+1)%1,texV=clamp(u*av+v*bv+q*cv),at=(Math.min(skin.height-1,Math.floor(texV*skin.height))*skin.width+Math.min(skin.width-1,Math.floor(texU*skin.width)))*4,tr=skin.pixels[at]/255,tg=skin.pixels[at+1]/255,tb=skin.pixels[at+2]/255,photoMax=Math.max(tr,tg,tb),red=pixels[pixel]/255,green=pixels[pixel+1]/255,blue=pixels[pixel+2]/255,spec=Math.max(0,Math.min(red,green,blue)-bodyMin*.8),diffuse=Math.max(.1,(Math.max(red,green,blue)-spec)/bodyMax);pixels[pixel]=clamp((p.rainbow?body[0]*(.32+.8*photoMax):tr)*diffuse+spec)*255;pixels[pixel+1]=clamp((p.rainbow?body[1]*(.32+.8*photoMax):tg)*diffuse+spec)*255;pixels[pixel+2]=clamp((p.rainbow?body[2]*(.32+.8*photoMax):tb)*diffuse+spec)*255}pixels[pixel+3]=255}
           }
         }
       });c.putImageData(image,0,0);
@@ -215,6 +230,6 @@
     let gl;try{gl=canvas.getContext('webgl',{alpha:true,antialias:true,premultipliedAlpha:false})}catch{}
     return gl?webglRenderer(canvas,gl):canvasRenderer(canvas);
   }
-  const api=Object.freeze({svg,create,createGeometry,rotation,modelRotation,transform,bodyColor,shadeSurface,shadowFootprint,shadowOpacity});scope.AppleFruit=api;if(typeof module!=='undefined')module.exports=api;
+  const api=Object.freeze({svg,create,createGeometry,layoutFor,shakeOffset,rotation,modelRotation,transform,bodyColor,shadeSurface,shadowFootprint,shadowOpacity});scope.AppleFruit=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
 

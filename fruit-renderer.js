@@ -27,9 +27,9 @@
     const dv=minus(surface(Math.min(Math.PI-.00001,v+e),u,depth),surface(Math.max(.00001,v-e),u,depth));
     return normal(cross(du,dv));
   }
-  function createGeometry(level,low=false){
+  function createGeometry(level,low=false,cinematic=false){
     level=clamp(Math.round(level),1,10);const depth=level/10;
-    const latitude=low?12+level*2:12+level*3,longitude=low?24+level*3:24+level*4,data=[];
+    const latitude=cinematic?(low?20+level*2:20+level*4):low?12+level*2:12+level*3,longitude=cinematic?(low?32+level*4:40+level*8):low?24+level*3:24+level*4,data=[];
     const vertex=(position,n,kind)=>data.push(...position,...n,kind);
     const quad=(p,n,kind)=>{for(const i of[0,1,2,0,2,3])vertex(p[i],n[i],kind)};
     for(let j=0;j<latitude;j++)for(let i=0;i<longitude;i++){
@@ -120,7 +120,7 @@
       if(disposed||lost)return;const b=canvas.getBoundingClientRect();if(!b.width||!b.height)return;
       const dpr=Math.min(scope.devicePixelRatio||1,2),w=Math.round(b.width*dpr),h=Math.round(b.height*dpr);
       if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);
-      const current=Math.round(G.appleVolume(p)*10);if(current!==level){const data=createGeometry(current);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);vertexCount=data.length/7;level=current}
+      const current=Math.round(G.appleVolume(p)*10);if(current!==level){const data=createGeometry(current,false,p.cinematic);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);vertexCount=data.length/7;level=current}
       gl.uniform1f(uniforms.polish,G.appleVolume(p));
       layout(b.width,b.height,p.appleCount,p.badOrbitAngle).forEach((o,i)=>{
         gl.uniformMatrix3fv(uniforms.rotation,false,new Float32Array(modelRotation(p,angle,i)));
@@ -133,17 +133,17 @@
     const c=canvas.getContext('2d');canvas.dataset.renderer='canvas';
     let level=-1,vertices,indices,projected,image,depthBuffer,last=-Infinity,disposed=false;
     const light=normal([-.6,.85,1.3]),half=normal([light[0],light[1],light[2]+1]);
-    function prepare(current){
-      const data=createGeometry(current,true),unique=[],lookup=new Map(),triangles=[];
+    function prepare(current,cinematic){
+      const data=createGeometry(current,true,cinematic),unique=[],lookup=new Map(),triangles=[];
       for(let i=0;i<data.length;i+=7){const vertex=data.slice(i,i+7),key=vertex.join(',');let index=lookup.get(key);if(index===undefined){index=unique.length/7;lookup.set(key,index);unique.push(...vertex)}triangles.push(index)}
       vertices=new Float32Array(unique);indices=new Uint32Array(triangles);projected=new Float32Array(unique.length/7*8);level=current;
     }
     return{draw(p,angle,now){
       if(disposed||!c||now-last<1000/(p.appleCount>3?24:40))return;last=now;
       const b=canvas.getBoundingClientRect();if(!b.width||!b.height)return;
-      const dpr=Math.min(scope.devicePixelRatio||1,1.5),w=Math.round(b.width*dpr),h=Math.round(b.height*dpr);
+      const dpr=p.cinematic?Math.min(Math.max(scope.devicePixelRatio||1,1.5),2):Math.min(scope.devicePixelRatio||1,1.5),w=Math.round(b.width*dpr),h=Math.round(b.height*dpr);
       if(canvas.width!==w||canvas.height!==h||!image){canvas.width=w;canvas.height=h;image=c.createImageData(w,h);depthBuffer=new Float32Array(w*h)}
-      image.data.fill(0);depthBuffer.fill(-Infinity);const pixels=image.data,current=Math.round(G.appleVolume(p)*10);if(level!==current)prepare(current);
+      image.data.fill(0);depthBuffer.fill(-Infinity);const pixels=image.data,current=Math.round(G.appleVolume(p)*10);if(level!==current)prepare(current,p.cinematic);
       layout(b.width,b.height,p.appleCount,p.badOrbitAngle).forEach((o,index)=>{
         const r=modelRotation(p,angle,index),body=bodyColor(p,now,index);
         for(let i=0,k=0;i<vertices.length;i+=7,k+=8){

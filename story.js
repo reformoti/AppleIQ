@@ -149,13 +149,13 @@
   }
   function showBadEnd(){
     cleanup();root.className='bad-end-root';
-    root.innerHTML='<div class="bad-scene-layer"><canvas id="bad-room" class="bad-room" role="img" aria-label="У школі результат 160 IQ виходить за межі шкали. Однокласники вражені."></canvas><div class="bad-shade" aria-hidden="true"></div><img class="bad-hero" src="assets/bad-end-character.webp" alt="Згорнута істота з порожніми очима" decoding="async"><img class="bad-glitch bad-glitch-red" src="assets/bad-end-character.webp" alt="" aria-hidden="true"><img class="bad-glitch bad-glitch-cyan" src="assets/bad-end-character.webp" alt="" aria-hidden="true"><div class="bad-iq" aria-label="IQ зашкалює"><strong id="bad-iq-value">161</strong><span>IQ</span></div><canvas id="bad-apples" class="bad-apples" role="img" aria-label="Дев’ять яблук обертаються дуже швидко"></canvas><p class="bad-caption" aria-live="polite"></p><div class="bad-title" aria-label="Bad End">Bad End</div></div><video class="bad-outro" id="bad-outro" src="video/apple-outro.mp4" preload="auto" muted playsinline disablepictureinpicture aria-label="Фінальне відео" hidden></video>';
+    root.innerHTML='<svg class="bad-filter-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><filter id="bad-trip" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".006 .01" numOctaves="2" seed="7" result="noise"><animate attributeName="baseFrequency" dur="12s" values=".006 .01;.009 .006;.006 .01" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg><div class="bad-scene-layer"><div class="bad-trip-glow" aria-hidden="true"></div><div class="bad-vignette" aria-hidden="true"></div><canvas id="bad-room" class="bad-room" role="img" aria-label="У школі результат 160 IQ виходить за межі шкали. Однокласники вражені."></canvas><div class="bad-shade" aria-hidden="true"></div><img class="bad-hero" src="assets/bad-end-character.webp" alt="Згорнута істота з порожніми очима" decoding="async"><img class="bad-glitch bad-glitch-red" src="assets/bad-end-character.webp" alt="" aria-hidden="true"><img class="bad-glitch bad-glitch-cyan" src="assets/bad-end-character.webp" alt="" aria-hidden="true"><div class="bad-iq" aria-label="IQ зашкалює"><strong id="bad-iq-value">160</strong><span>IQ</span></div><canvas id="bad-apples" class="bad-apples" role="img" aria-label="Дев’ять яблук обертаються дуже швидко"></canvas><p class="bad-caption" aria-live="polite"></p><div class="bad-title" data-text="BAD END" aria-label="Bad End">BAD END</div></div><video class="bad-outro" id="bad-outro" src="video/apple-outro.mp4" preload="auto" muted playsinline disablepictureinpicture aria-label="Фінальне відео" hidden></video>';
     // Вихід прив’язаний до справжнього ended, а не до тривалості анімації чи помилки завантаження.
-    stopBadAudioEnd=window.AppleAudio?.onEnded(3,()=>{save();cleanup();window.AppleBadEnd.exit(window.AppleAudio,window.location)});
+    stopBadAudioEnd=window.AppleAudio?.onEnded(3,()=>{cleanup();progress=null;window.AppleBadEnd.exit(window.AppleAudio,window.location,localStorage)});
     window.AppleAudio?.setTrack(3,{startAt:progress.badAudioTime||0});
     badVideo=root.querySelector('#bad-outro');badVideo.muted=true;
     const room=root.querySelector('#bad-room'),c=room.getContext('2d');fruitRenderer=window.AppleFruit.create(root.querySelector('#bad-apples'));
-    const apples=G.normalise({iq:160,qualityLevel:42,appleCount:9,directions:['clockwise','diagonal'],direction:'diagonal',potential:0});
+    const apples=G.normalise({iq:160,qualityLevel:42,appleCount:9,directions:['clockwise','diagonal'],direction:'diagonal',potential:0,rainbow:true,cinematic:true});
     let spin=progress.eventTime,lastReaction='';
     function render(now){
       if(!previousTime)previousTime=now;const paused=document.hidden||document.body.classList.contains('settings-open'),dt=paused?0:Math.min((now-previousTime)/1000,1);previousTime=now;
@@ -169,18 +169,20 @@
       root.querySelector('.bad-glitch-cyan').style.transform=pose+` translateX(${-7*distortion.glitch}px)`;
       root.querySelector('.bad-glitch-red').style.opacity=scene.hero*distortion.glitch*.6;
       root.querySelector('.bad-glitch-cyan').style.opacity=scene.hero*distortion.glitch*.5;
-      root.querySelector('#bad-iq-value').textContent=scene.iq;root.querySelector('.bad-iq').style.opacity=1-ease((t-12)/3);
+      root.querySelector('#bad-iq-value').textContent=scene.iq;root.querySelector('.bad-iq').style.opacity=1-ease((t-22)/1);
       root.classList.toggle('bad-paused',paused);progress.badAudioTime=window.AppleAudio?.getPosition?.()||0;
       // Останні 12 секунд беруться з фактичної позиції треку, включно з паузою та відновленням.
       const playback=window.AppleAudio?.getPlayback?.(),outro=window.AppleBadEnd.outro(playback?.time,playback?.duration);
-      root.querySelector('.bad-scene-layer').style.opacity=1-outro.fade;badVideo.hidden=!outro.showVideo;const settings=document.querySelector('#settings-toggle');if(settings){settings.style.opacity=playback?.paused?1:1-outro.fade;settings.style.visibility=outro.showVideo&&!playback?.paused?'hidden':''}
+      const world=root.querySelector('.bad-scene-layer');world.style.opacity=1-outro.fade;
+      const trip=reduced?0:ease((t-3)/4);world.style.filter=`url(#bad-trip) hue-rotate(${Math.sin(spin*.35)*24*trip}deg) saturate(${1+trip*.45})`;
+      world.style.transform=`scale(${1+trip*(.025+Math.sin(spin*.9)*.012)}) rotate(${Math.sin(spin*.55)*.35*trip}deg)`;badVideo.hidden=!outro.showVideo;const settings=document.querySelector('#settings-toggle');if(settings){settings.style.opacity=playback?.paused?1:1-outro.fade;settings.style.visibility=outro.showVideo&&!playback?.paused?'hidden':''}
       if(outro.showVideo&&badVideo.readyState>=1){
         const duration=Number.isFinite(badVideo.duration)&&badVideo.duration>0?badVideo.duration:7,target=Math.min(duration-.01,outro.videoTime*duration/7);
         badVideo.playbackRate=Math.max(.25,Math.min(4,duration/7));
         if(Math.abs(badVideo.currentTime-target)>.2)badVideo.currentTime=Math.max(0,target);
         if(paused||playback.paused)badVideo.pause();else if(badVideo.paused&&!badVideo.ended)badVideo.play().catch(()=>{});
       }else badVideo.pause();
-      const caption=root.querySelector('.bad-caption');caption.style.opacity=1-scene.shade;if(scene.reaction!==lastReaction){caption.textContent=scene.reaction;lastReaction=scene.reaction}
+      const caption=root.querySelector('.bad-caption');caption.style.opacity=1-ease((t-14)/2);if(scene.reaction!==lastReaction){caption.textContent=scene.reaction;lastReaction=scene.reaction}
       if(!paused)fruitRenderer.draw({...apples,badOrbitAngle:spin*.9},spin*9,now);
       if(now-lastSave>1000){save();lastSave=now}lifeFrame=requestAnimationFrame(render);
     }

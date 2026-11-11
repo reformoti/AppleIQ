@@ -63,7 +63,7 @@
     const columns=Math.ceil(Math.sqrt(count)),rows=Math.ceil(count/columns),cell=Math.min(count===1?200:140,width/(columns+.4),height/(rows+.2));
     return Array.from({length:count},(_,i)=>{const row=Math.floor(i/columns),n=Math.min(columns,count-row*columns);return{x:width/2+(i%columns-(n-1)/2)*cell,y:height/2+(row-(rows-1)/2)*cell+cell*.04,scale:cell*.38}});
   }
-  function bodyColor(p,now,index){if(!p.rainbow)return[.75,.035,.055];const h=(now/10000+index*.11)%1,k=n=>(n+h*6)%6;return[5,3,1].map(n=>.78*(1-.88*Math.max(0,Math.min(k(n),4-k(n),1))))}
+  function bodyColor(p,now,index){if(!p.rainbow)return[.75,.035,.055];const period=p.cinematic?6000:10000,h=((now/period+index/Math.max(1,p.appleCount))%1+1)%1,k=n=>(n+h*6)%6;return[5,3,1].map(n=>.92*(1-.94*Math.max(0,Math.min(k(n),4-k(n),1))))}
   // Фіксована студійна схема: тепле верхнє світло, холодне заповнення та контровий обідок.
   const KEY_LIGHT=normal([-.6,.85,1.3]),FILL_LIGHT=normal([.9,.1,.35]),RIM_LIGHT=normal([-.35,.5,-1]);
   const SHADOW_COLOR=[.005,.004,.009],BOUNCE_COLOR=[.18,.19,.24];
@@ -201,6 +201,6 @@
     let gl;try{gl=canvas.getContext('webgl',{alpha:true,antialias:true,premultipliedAlpha:false})}catch{}
     return gl?webglRenderer(canvas,gl):canvasRenderer(canvas);
   }
-  const api=Object.freeze({svg,create,createGeometry,rotation,modelRotation,transform,shadeSurface,shadowFootprint,shadowOpacity});scope.AppleFruit=api;if(typeof module!=='undefined')module.exports=api;
+  const api=Object.freeze({svg,create,createGeometry,rotation,modelRotation,transform,bodyColor,shadeSurface,shadowFootprint,shadowOpacity});scope.AppleFruit=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
 

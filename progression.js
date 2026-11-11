@@ -17,11 +17,12 @@ const hasStem=p=>sides(p)===360;
 const directionMultiplier=p=>p.directions.includes(p.direction)?DIRECTIONS.find(d=>d.id===p.direction)?.bonus||1:1;
 const speed=p=>1+p.speedLevel*.1;
 function price(p,type,id){if(type==='speed')return p.speedLevel>=80?null:p.speedLevel<2?30:Math.round(30*Math.pow(1.6,p.speedLevel-1));if(type==='quality')return p.qualityLevel>=42?null:Math.round(150*Math.pow(1.24,p.qualityLevel));if(type==='count')return p.appleCount>=9?null:Math.round(1e6*Math.pow(5,p.appleCount-1));if(type==='color')return p.rainbow?null:1e7;if(type==='retake')return p.retakeUnlocked||p.retake?null:retakeCost(p);if(type==='direction'){const d=DIRECTIONS.find(d=>d.id===id);return !d||p.directions.includes(id)?null:d.cost}return null}
-function income(p){const base=p.advanced?50:2.5;return base*speed(p)*(1+(sides(p)-4)/90+appleForm(p)*3+appleVolume(p)*5)*p.appleCount*directionMultiplier(p)*(p.rainbow?3:1)*iqMultiplier(p)}
+function incomePerApple(p){const base=p.advanced?50:2.5;return base*speed(p)*(1+(sides(p)-4)/90+appleForm(p)*3+appleVolume(p)*5)*directionMultiplier(p)*(p.rainbow?3:1)*iqMultiplier(p)}
+function income(p){return incomePerApple(p)*p.appleCount}
 function canBuy(p,type,id){const cost=price(p,type,id);return cost!==null&&p.potential+1e-7>=cost&&(p.advanced||type==='speed'&&p.speedLevel<2)}
 function buy(p,type,id){if(!canBuy(p,type,id))return false;const cost=price(p,type,id);p.potential=Math.max(0,p.potential-cost);if(type==='speed')p.speedLevel++;if(type==='quality')p.qualityLevel++;if(type==='count')p.appleCount++;if(type==='color')p.rainbow=true;if(type==='retake')p.retakeUnlocked=true;if(type==='direction'){p.directions.push(id);p.direction=id}return true}
 function startRetake(p){if(!p.retakeUnlocked||p.retake||!p.advanced||p.phase!=='mind'||p.step!==5)return false;p.retakeUnlocked=false;p.retake=true;return true}
 function retakeIQ(p,correct){return Math.min(250,p.baseIQ+Math.max(0,Math.min(20,Math.floor(Number(correct)||0)))*5)}
 function schoolReaction(iq){return iq<40?'laugh':iq<80?'quiet':'friends'}
-const api={DIRECTIONS,IQ_THRESHOLDS,normalise,normaliseRotation,sides,appleForm,appleVolume,hasStem,directionMultiplier,speed,price,income,iqMultiplier,retakeCost,recordIQ,canBuy,buy,startRetake,retakeIQ,schoolReaction};scope.AppleProgression=Object.freeze(api);if(typeof module!=='undefined')module.exports=api;
+const api={DIRECTIONS,IQ_THRESHOLDS,normalise,normaliseRotation,sides,appleForm,appleVolume,hasStem,directionMultiplier,speed,price,income,incomePerApple,iqMultiplier,retakeCost,recordIQ,canBuy,buy,startRetake,retakeIQ,schoolReaction};scope.AppleProgression=Object.freeze(api);if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

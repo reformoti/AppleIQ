@@ -1,6 +1,6 @@
 'use strict';
 (()=>{
- const CLOUD='https://brukivka-cloud.stunningherring.chatgpt.site',META='appleiq-cloud-profile-01',C=window.AppleCloudCore,S=window.AppleSaveStore;
+ const CLOUD='https://xar-cloud.stunningherring.chatgpt.site',META='appleiq-cloud-profile-01',C=window.AppleCloudCore,S=window.AppleSaveStore;
  let flow=null,busy=false,panel=null,lastNotice='Один акаунт XaR Cloud для всіх ігор. Прогрес ігор розділений.',noticeBad=false;
  const get=id=>panel?.querySelector('#'+id);
  function notice(text,bad=false){lastNotice=text;noticeBad=bad;paint()}
@@ -30,3 +30,4 @@
  const markup='<details class="cloud-settings" id="cloud-settings"><summary>Хмарне збереження</summary><p class="cloud-name" id="cloud-account-name"></p><p id="cloud-date"></p><div class="cloud-actions"><button type="button" id="cloud-login">Увійти / зареєструватися ↗</button><button type="button" id="cloud-save">Зберегти у хмару ↗</button><button type="button" id="cloud-load">Завантажити з хмари ↗</button><button type="button" id="cloud-logout">Вийти з акаунта ↗</button></div><p id="cloud-notice" role="status"></p><details class="cloud-help"><summary>Перенесення та резервні копії</summary><p>Збережи прогрес тут, а на іншому пристрої увійди тим самим логіном XaR Cloud та завантаж копію. Це ручне хмарне збереження. Завантаження замінить локальний прогрес AppleIQ; перед цим створюється резервна копія. Скидання гри очищає локальний прогрес; раніше створена хмарна копія залишається.</p><button type="button" id="cloud-backups">Локальні резервні копії</button><div id="cloud-backup-list"></div></details></details>';
  window.AppleCloud=Object.freeze({markup,mount});
 })();
+

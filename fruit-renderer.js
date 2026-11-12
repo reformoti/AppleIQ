@@ -29,9 +29,9 @@
     const dv=minus(surface(Math.min(Math.PI-.00001,v+e),u,depth),surface(Math.max(.00001,v-e),u,depth));
     return normal(cross(du,dv));
   }
-  function createGeometry(level,low=false,cinematic=false,waterLevel=0){
+  function createGeometry(level,low=false,cinematic=false,waterLevel=0,combat=false){
     level=clamp(Math.round(level),1,10);const depth=level/10;
-    const latitude=cinematic?(low?20+level*3:24+level*6):low?16+level*2:16+level*4,longitude=cinematic?(low?32+level*5:48+level*10):low?28+level*3:32+level*5,data=[];
+    const latitude=combat?18:cinematic?(low?20+level*3:24+level*6):low?16+level*2:16+level*4,longitude=combat?28:cinematic?(low?32+level*5:48+level*10):low?28+level*3:32+level*5,data=[];
     const vertex=(position,n,kind)=>data.push(...position,...n,kind);
     const quad=(p,n,kind)=>{for(const i of[0,1,2,0,2,3])vertex(p[i],n[i],kind)};
     for(let j=0;j<latitude;j++)for(let i=0;i<longitude;i++){
@@ -49,7 +49,7 @@
       const n=normal(cross(minus(pts[1],pts[0]),minus(pts[2],pts[0])));quad(pts,[n,n,n,n],2);
     }
     // Підняті над шкіркою об’ємні краплі; геометрія рухається разом із плодом.
-    const drops=[0,12,22,34][clamp(Math.round(waterLevel),0,3)],rings=low?6:8,segments=low?10:14;
+    const drops=[0,12,22,34][clamp(Math.round(waterLevel),0,3)],rings=combat?4:low?6:8,segments=combat?6:low?10:14;
     for(let d=0;d<drops;d++){
       const v=.23+Math.acos(1-2*(d+.5)/drops)*.85,u=d*2.39996323,point=surface(v,u,depth),out=surfaceNormal(v,u,depth),radius=.027+(d%5)*.006,center=point.map((x,i)=>x+out[i]*radius*.11);
       const bead=(a,b)=>[Math.sin(a)*Math.cos(b),Math.cos(a),Math.sin(a)*Math.sin(b)];
@@ -183,17 +183,17 @@
   function canvasRenderer(canvas){
     const c=canvas.getContext('2d');canvas.dataset.renderer='canvas';
     let level=-1,wetLevel=-1,vertices,indices,projected,image,depthBuffer,last=-Infinity,disposed=false;
-    function prepare(current,cinematic,water){
-      const data=createGeometry(current,true,cinematic,water),unique=[],lookup=new Map(),triangles=[];
+    function prepare(current,cinematic,water,combat){
+      const data=createGeometry(current,true,cinematic,combat?Math.min(water,1):water,combat),unique=[],lookup=new Map(),triangles=[];
       for(let i=0;i<data.length;i+=7){const vertex=data.slice(i,i+7),key=vertex.join(',');let index=lookup.get(key);if(index===undefined){index=unique.length/7;lookup.set(key,index);unique.push(...vertex)}triangles.push(index)}
       vertices=new Float32Array(unique);indices=new Uint32Array(triangles);projected=new Float32Array(unique.length/7*10);level=current;wetLevel=water;
     }
     return{draw(p,angle,now){
-      if(disposed||!c||now-last<1000/(p.appleCount>3?24:40))return;last=now;
+      if(disposed||!c||now-last<1000/(p.combat?15:p.appleCount>3?24:40))return;last=now;
       const b=canvas.getBoundingClientRect();if(!b.width||!b.height)return;
-      const dpr=Math.min(Math.max(scope.devicePixelRatio||1,p.cinematic||p.appleCount===1?1.5:1.25),2),w=Math.round(b.width*dpr),h=Math.round(b.height*dpr);
+      const dpr=p.combat?1:Math.min(Math.max(scope.devicePixelRatio||1,p.cinematic||p.appleCount===1?1.5:1.25),2),w=Math.round(b.width*dpr),h=Math.round(b.height*dpr);
       if(canvas.width!==w||canvas.height!==h||!image){canvas.width=w;canvas.height=h;image=c.createImageData(w,h);depthBuffer=new Float32Array(w*h)}
-      image.data.fill(0);depthBuffer.fill(-Infinity);const pixels=image.data,current=Math.round(G.appleVolume(p)*10);if(level!==current||wetLevel!==(p.waterLevel||0))prepare(current,p.cinematic,p.waterLevel||0);
+      image.data.fill(0);depthBuffer.fill(-Infinity);const pixels=image.data,current=Math.round(G.appleVolume(p)*10);if(level!==current||wetLevel!==(p.waterLevel||0))prepare(current,p.cinematic,p.waterLevel||0,p.combat);
       const objects=layoutFor(p,b.width,b.height,now);
       for(const o of objects){const sh=shadowFootprint(o,p.shadowLevel||0),sx=sh.x*dpr,sy=sh.y*dpr,rx=sh.rx*dpr*1.7,ry=sh.ry*dpr*2.1;
         for(let y=Math.max(0,Math.floor(sy-ry));y<=Math.min(h-1,Math.ceil(sy+ry));y++)for(let x=Math.max(0,Math.floor(sx-rx));x<=Math.min(w-1,Math.ceil(sx+rx));x++){const nx=(x+.5-sx)/rx,ny=(y+.5-sy)/ry,edge=clamp((Math.hypot(nx,ny)-.7)/.3),halo=(.48+(p.shadowLevel||0)*.045)*Math.exp(-(nx*nx+ny*ny)*3)*(1-edge*edge*(3-2*edge)),shadow=shadowOpacity(nx*1.7,ny*2.1,p.shadowLevel||0),alpha=shadow+halo*(1-shadow),pixel=(y*w+x)*4;if(alpha>0){const old=pixels[pixel+3]/255,total=alpha+old*(1-alpha);for(let channel=0;channel<3;channel++){const color=SHADOW_COLOR[channel]*shadow+BOUNCE_COLOR[channel]*halo*(1-shadow);pixels[pixel+channel]=(color+pixels[pixel+channel]/255*old*(1-alpha))/total*255}pixels[pixel+3]=total*255}}
@@ -232,4 +232,3 @@
   }
   const api=Object.freeze({svg,create,createGeometry,layoutFor,shakeOffset,rotation,modelRotation,transform,bodyColor,shadeSurface,shadowFootprint,shadowOpacity});scope.AppleFruit=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
-

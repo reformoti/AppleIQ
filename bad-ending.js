@@ -13,6 +13,8 @@
  const RESET_KEY='apple-iq-ended-01',SAVE_KEYS=['apple-iq-protocol-02','apple-iq-story-01'];
  function needsReset(storage){try{return storage?.getItem(RESET_KEY)==='1'}catch{return false}}
  function consumeReset(storage){if(!needsReset(storage))return false;try{SAVE_KEYS.forEach(key=>storage.removeItem(key));storage.removeItem(RESET_KEY)}catch{}return true}
- function exit(audio,location,storage){try{storage?.setItem(RESET_KEY,'1');SAVE_KEYS.forEach(key=>storage?.removeItem(key))}catch{}audio?.setTrack(0);location.replace('https://www.google.com/')}
- const api=Object.freeze({matches,frame,risingIQ,distortion,outro,needsReset,consumeReset,REACTIONS,DURATION,exit});scope.AppleBadEnd=api;if(typeof module!=='undefined')module.exports=api;
+ function clearProgress(storage){for(const key of SAVE_KEYS)try{storage?.removeItem(key)}catch{}try{storage?.setItem(RESET_KEY,'1')}catch{}}
+ function restart(audio,location,storage){clearProgress(storage);audio?.setTrack(0);location.reload()}
+ function exit(audio,location,storage){clearProgress(storage);audio?.setTrack(0);location.replace('https://www.google.com/')}
+ const api=Object.freeze({matches,frame,risingIQ,distortion,outro,needsReset,consumeReset,clearProgress,restart,REACTIONS,DURATION,exit});scope.AppleBadEnd=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

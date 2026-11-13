@@ -34,8 +34,8 @@ console.log('Passed: last-boss transition, completed-save migration, original ch
 
 // Three supplied images run in the requested order, followed by a hard cut and an endless epilogue.
 assert.deepEqual(E.chapters.slice(-5).map(s=>s.id),['act-one','act-two','act-three','blackout','hill']);
-for(const [t,caption] of [[89,'Может это и к лучшему?'],[95,'Кто я после этого?'],[102,'. . .'],[108,'Где я свернул не туда?'],[116,'Чего я добился?'],[125,'']])assert.equal(E.at(t).caption,caption);
-assert.equal(E.music(88).id,5);assert.equal(E.music(136.99).id,5);assert.equal(E.music(137).id,7);assert.equal(E.music(137).gain,0);assert.equal(E.music(143).gain,.5);assert.equal(E.music(147).gain,1);assert.notEqual(E.dotAlpha(1,0),E.dotAlpha(1,1));
-for(const t of [108,130,137,143,147]){h=harness({...completed,eventTime:t});h.restore();assert.equal(h.p().eventTime,t);assert.equal(h.track(),E.music(t).id);assert.equal(h.gain(),E.music(t).gain);const snapshot=C.collect(h.storage);C.validate(snapshot);assert.equal(JSON.parse(snapshot.entries[S.STORY]).eventTime,t)}
+for(const [t,caption] of [[89,'Може, це й на краще?'],[95,'Хто я після цього?'],[102,'. . .'],[108,'Де я звернув не туди?'],[116,'Чого я досяг?'],[125,'']])assert.equal(E.at(t).caption,caption);
+assert.equal(E.music(0).id,5);assert.equal(E.music(74).id,5);assert.equal(E.music(88).id,5);assert.equal(E.music(136.99).id,5);assert.equal(E.music(137).id,7);assert.equal(E.music(137).gain,0);assert.equal(E.music(143).gain,.5);assert.equal(E.music(147).gain,1);assert.notEqual(E.dotAlpha(1,0),E.dotAlpha(1,1));
+for(const t of [0,74,108,130,137,143,147]){h=harness({...completed,eventTime:t});h.restore();assert.equal(h.p().eventTime,t);assert.equal(h.track(),E.music(t).id);assert.equal(h.gain(),E.music(t).gain);const snapshot=C.collect(h.storage);C.validate(snapshot);assert.equal(JSON.parse(snapshot.entries[S.STORY]).eventTime,t)}
 h=harness({...completed,eventTime:147});h.restore();h.tick(1000);h.tick(2000);assert.equal(h.frames.size,1);assert.equal(h.p().eventTime,147);h.get('#genius-ending-back').onclick();assert.equal(h.frames.size,1); // the training loop replaces the epilogue loop
 console.log('Passed: act order and exact dialogue, wave dots, blackout music switch, synchronized gain, long-scene/cloud restore and persistent epilogue animation.');

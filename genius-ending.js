@@ -22,10 +22,10 @@
     [139,147,'hill','','']
   ].map(([start,end,id,label,caption])=>Object.freeze({start,end,id,label,caption})));
   function at(time){const t=clamp(Number.isFinite(time)?time:0,0,DURATION),chapter=chapters.find(s=>t<s.end)||chapters[chapters.length-1],local=t-chapter.start;let caption=chapter.caption;
-    if(chapter.id==='act-one')caption=local<6?'Может это и к лучшему?':local<12?'Кто я после этого?':'. . .';
-    if(chapter.id==='act-two')caption=local<8?'Где я свернул не туда?':'Чего я добился?';
+    if(chapter.id==='act-one')caption=local<6?'Може, це й на краще?':local<12?'Хто я після цього?':'. . .';
+    if(chapter.id==='act-two')caption=local<8?'Де я звернув не туди?':'Чого я досяг?';
     return {...chapter,caption,time:t,local,finished:t>=DURATION}}
-  function music(time){return time<ACT_START?{id:0,gain:1}:time<BLACKOUT?{id:5,gain:1}:{id:7,gain:ease((time-HILL_START)/8)}}
+  function music(time){return time<BLACKOUT?{id:5,gain:1}:{id:7,gain:ease((time-HILL_START)/8)}}
   function dotAlpha(time,index){return .08+.92*Math.pow((1+Math.cos(time*3.2-index*1.05))/2,2)}
   function begin(p,replay=false){if(p.endingPath!=='genius'||p.geniusArena?.status!=='complete'||p.geniusArena.next!==10||p.geniusEndingSeen&&!replay)return false;p.phase='genius-end';p.eventTime=0;return true}
   const rect=(c,x,y,w,h,color,r=0)=>{c.fillStyle=color;c.beginPath();c.roundRect(x,y,w,h,r);c.fill()};

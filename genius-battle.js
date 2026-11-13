@@ -32,7 +32,7 @@
   }return f.result
  }
  function advance(p){const a=normalise(p),f=a?.fight;if(p.phase!=='genius-battle'||!f||f.result!=='win'||f.round!==1)return false;a.fight=newFight(a.next,2);return true}
- function victory(p){const a=normalise(p),f=a?.fight;if(p.phase!=='genius-battle'||!f||f.result!=='win'||f.round!==2)return false;G.recordIQ(p,Math.max(p.iq,RIVALS[a.next].iq));a.next++;a.fight=null;a.status=a.next===10?'complete':'ready';p.phase='genius-hub';return true}
+ function victory(p){const a=normalise(p),f=a?.fight;if(p.phase!=='genius-battle'||!f||f.result!=='win'||f.round!==2)return false;G.recordIQ(p,Math.max(p.iq,RIVALS[a.next].iq));a.next++;a.fight=null;a.status=a.next===10?'complete':'ready';p.phase=a.status==='complete'?'genius-end':'genius-hub';p.eventTime=0;return true}
  function lose(p,forfeit=false){const a=normalise(p);if(p.phase!=='genius-battle'||!a?.fight||(!forfeit&&a.fight.result!=='loss'))return false;p.iq=80;p.phase='genius-loss';p.eventTime=0;p.retake=false;p.retakeUnlocked=false;a.next=0;a.status='recovery';a.fight=null;return true}
  function recover(p){const a=normalise(p);if(a?.status!=='recovery'||p.iq<100)return false;a.status='ready';a.next=0;a.fight=null;return true}
  const api=Object.freeze({RIVALS,config,newFight,normalise,available,start,spin,shoot,leadTarget,step,advance,victory,lose,recover,segmentDistance});scope.AppleGenius=api;if(typeof module!=='undefined')module.exports=api;

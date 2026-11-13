@@ -6,3 +6,23 @@
 @media(max-width:700px){.battle-toggle{right:16px;top:150px;font-size:10px}.arena-hub-root{padding:28px 18px 45px}.arena-hub-top{padding-left:48px}.arena-hub-panel{margin-top:45px}.arena-hub-panel h1{font-size:36px}.arena-next{padding-bottom:20px;min-height:215px}.arena-next>strong{font-size:23px}.arena-next>button{position:static;margin-top:23px;min-width:100%}.arena-rival{gap:10px}.arena-rival canvas{width:38px;height:48px}.arena-rival strong{font-size:12px}.rival-order{font-size:9px}.rival-iq{font-size:10px}.arena-hud{height:146px;padding:76px 16px 10px;gap:15px;grid-template-columns:1fr .65fr 1fr}.arena-hud span{font-size:8px;letter-spacing:0}.arena-round>strong{font-size:22px!important}.arena-enemy-health span{display:block;line-height:1.5;margin-top:-5px}.arena-health{margin-top:9px}.arena-controls{padding:15px 16px;gap:12px;min-height:90px}.arena-controls>span{font-size:9px;max-width:75%}.arena-controls button{padding:8px 10px;font-size:10px}.arena-spin{left:28%;width:42vw;height:42vw}.arena-spin-rate{top:calc(52% + 24vw)}.arena-spin-rate strong{font-size:25px}.arena-round-end h2{font-size:30px}.heaven-gate{width:230px;height:430px;top:12%}.hell-gate{width:220px}.choice-paradise .heaven-sun{width:100px;height:100px}}
 @media(prefers-reduced-motion:reduce){.choice-atmosphere *{animation:none!important}.choice-paradise,.choice-inferno,.arena-health i{transition:none}}
 .life-choice:has(#ultimate-happy:hover) .choice-inferno{opacity:0}.life-choice:has(#ultimate-continue:hover) .choice-paradise{opacity:0}
+
+.genius-ending-root .film-top button{background:none;border:0;padding:12px 0;color:#aaa7a4;font:11px Arial;cursor:pointer}
+.genius-ending-root .film-bottom{min-height:90px}.genius-ending-root .film-bottom p{padding:0;max-width:800px}
+.genius-ending-finale{position:absolute;inset:62px 0 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#120d078c;text-align:center;padding:24px}
+.genius-ending-finale>span{font:10px monospace;letter-spacing:3px;color:#d2b793}.genius-ending-finale h1{font:clamp(30px,6vw,64px) Georgia,serif;font-weight:400;color:#f4e4cd;margin:23px 0 30px;outline:none}
+.genius-ending-finale>div{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}.genius-ending-finale button{border:1px solid #b0936e66;border-radius:4px;background:#30251bbf;color:#e4d5bf;padding:14px 20px;font-size:12px;cursor:pointer}
+.genius-ending-finale button:hover{background:#51402e}.genius-ending-root button:focus-visible{outline:2px solid #eed5b0;outline-offset:4px}
+.genius-ending-root{background:#000!important}
+.genius-ending-root .wave-caption{font:28px monospace;letter-spacing:12px}
+.genius-ending-finale{inset:auto 0 28px;background:none;padding:14px;pointer-events:none}
+.genius-ending-finale h1{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);margin:0}
+.genius-ending-finale>div{pointer-events:auto}
+.genius-ending-finale button{background:#19170faa;border-color:#b4a68155;backdrop-filter:blur(6px)}
+.genius-epilogue .film-top,.genius-epilogue .film-bottom{visibility:hidden}
+.genius-epilogue .film-progress{opacity:0}
+@media(max-width:700px){.genius-ending-root .film-top{letter-spacing:1px}.genius-ending-root .film-top button{font-size:10px}.genius-ending-root .film-bottom{min-height:90px;padding:15px 20px}.genius-ending-finale{inset:auto 0 22px}.genius-ending-finale button{font-size:11px;padding:12px 14px}}
+
+@media(max-width:700px) and (orientation:portrait){.genius-ending-root{justify-content:center}.genius-ending-root .film-top{position:absolute;inset:0 0 auto;box-sizing:border-box}.genius-ending-root canvas{flex:0 0 auto;height:auto;aspect-ratio:16/9;max-height:calc(100% - 160px)}.genius-ending-root .film-bottom{min-height:0;padding-top:20px}.genius-ending-root .film-progress{position:absolute;bottom:0;width:100%}}
+
+@media(max-width:700px) and (orientation:portrait){.genius-ending-root.genius-portrait canvas{aspect-ratio:3/4}.genius-epilogue .genius-ending-finale{bottom:24px}}

@@ -1,6 +1,6 @@
 'use strict';
 (()=>{
-const VERSION='4.28',KEY='appleiq-audio-01';let preferences={volume:.2,muted:false},track=0,paused=false,blocked=false,missing=false;
+const VERSION='4.29',KEY='appleiq-audio-01';let preferences={volume:.2,muted:false},track=0,paused=false,blocked=false,missing=false;
 const endedListeners=new Set();let pendingSeek=0,gain=1;
 const cinematic=()=>[3,5,6,7].includes(track);
 try{const p=JSON.parse((window.AppleSaveStore?window.AppleSaveStore.read(KEY):localStorage.getItem(KEY))||'null');if(p){const valid=n=>Number.isFinite(n)&&n>=0&&n<=1;preferences={volume:valid(p.volume)?p.volume:Array.isArray(p.volumes)&&[2,3].includes(p.volumes.length)&&p.volumes.every(valid)?p.volumes[0]:.2,muted:p.muted===true}}}catch{}

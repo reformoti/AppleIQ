@@ -13,14 +13,14 @@ for(const [width,height] of [[1200,680],[390,650]])for(const reduced of [true,fa
 }
 assert.equal(E.at(NaN).time,0);assert.equal(E.at(60).id,'years');assert.equal(E.at(74).id,'warm');assert.equal(E.at(88).id,'act-one');assert.equal(E.at(E.DURATION).finished,true);
 function harness(saved){
-  const nodes=new Map(),values=new Map([[S.STORY,JSON.stringify(saved)]]),frames=new Map(),events=new Map(),classes=new Set();let frame=0,root,track=-1,gain=1;
+  const nodes=new Map(),values=new Map([[S.STORY,JSON.stringify(saved)]]),frames=new Map(),events=new Map(),classes=new Set();let frame=0,root,track=-1,gain=1;const sounds=[];
   const classList={add:n=>classes.add(n),remove:n=>classes.delete(n),toggle:(n,v)=>v?classes.add(n):classes.delete(n),contains:n=>classes.has(n)};
   function get(s){if(!nodes.has(s))nodes.set(s,{style:{},hidden:false,classList,setAttribute(){},focus(){},append(){},remove(){},querySelector:get,querySelectorAll:()=>[],getContext:()=>context,getBoundingClientRect:()=>({width:1200,height:680})});return nodes.get(s)}
   const doc={hidden:false,body:{classList,append:n=>root=n},createElement:()=>get('root'),querySelector:get,querySelectorAll:()=>[],addEventListener(){}};
   const storage={getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)};
-  const win={AppleProgression:G,AppleGenius:B,AppleGeniusEnding:E,AppleSaveStore:{read:k=>S.read(k,storage),write:(k,v)=>S.write(k,v,storage)},AppleGeniusUI:{hub:(root,p,h)=>events.set('hub',h)},AppleAudio:{setTrack:id=>track=id,setGain:value=>gain=value},AppleFruit:{svg:()=>'',create:()=>({draw(){},dispose(){}})},addEventListener:(n,f)=>events.set(n,f),removeEventListener:(n,f)=>{if(events.get(n)===f)events.delete(n)}};
+  const win={AppleSFX:{stop:()=>sounds.push(['stop']),update:(...a)=>sounds.push(a)},AppleProgression:G,AppleGenius:B,AppleGeniusEnding:E,AppleSaveStore:{read:k=>S.read(k,storage),write:(k,v)=>S.write(k,v,storage)},AppleGeniusUI:{hub:(root,p,h)=>events.set('hub',h)},AppleAudio:{setTrack:id=>track=id,setGain:value=>gain=value},AppleFruit:{svg:()=>'',create:()=>({draw(){},dispose(){}})},addEventListener:(n,f)=>events.set(n,f),removeEventListener:(n,f)=>{if(events.get(n)===f)events.delete(n)}};
   vm.runInNewContext(fs.readFileSync(require.resolve('../story.js'),'utf8'),{window:win,document:doc,localStorage:storage,Image:class{},requestAnimationFrame:f=>{frames.set(++frame,f);return frame},cancelAnimationFrame:id=>frames.delete(id),clearTimeout(){},matchMedia:()=>({matches:false}),devicePixelRatio:1,Date,Math,Intl});
-  return {track:()=>track,gain:()=>gain,restore:()=>win.AppleStory.restore(),get,doc,classes,events,storage,frames,p:()=>JSON.parse(storage.getItem(S.STORY)),html:()=>root.innerHTML,tick:t=>{const work=[...frames.values()];frames.clear();work.forEach(f=>f(t))}};
+  return {sounds,track:()=>track,gain:()=>gain,restore:()=>win.AppleStory.restore(),get,doc,classes,events,storage,frames,p:()=>JSON.parse(storage.getItem(S.STORY)),html:()=>root.innerHTML,tick:t=>{const work=[...frames.values()];frames.clear();work.forEach(f=>f(t))}};
 }
 let h=harness(completed);assert.equal(h.restore(),true);assert.ok(h.html().includes('genius-ending-canvas'));assert.equal(h.frames.size,1);
 for(let t=1000;t<=18000;t+=1000)h.tick(t);assert.ok(h.p().eventTime>14&&h.p().eventTime<23);
@@ -39,3 +39,5 @@ assert.equal(E.music(0).id,5);assert.equal(E.music(74).id,5);assert.equal(E.musi
 for(const t of [0,74,108,130,137,143,147]){h=harness({...completed,eventTime:t});h.restore();assert.equal(h.p().eventTime,t);assert.equal(h.track(),E.music(t).id);assert.equal(h.gain(),E.music(t).gain);const snapshot=C.collect(h.storage);C.validate(snapshot);assert.equal(JSON.parse(snapshot.entries[S.STORY]).eventTime,t)}
 h=harness({...completed,eventTime:147});h.restore();h.tick(1000);h.tick(2000);assert.equal(h.frames.size,1);assert.equal(h.p().eventTime,147);h.get('#genius-ending-back').onclick();assert.equal(h.frames.size,1); // the training loop replaces the epilogue loop
 console.log('Passed: act order and exact dialogue, wave dots, blackout music switch, synchronized gain, long-scene/cloud restore and persistent epilogue animation.');
+
+assert.equal(E.at(16).caption,'. . .');h=harness({...completed,eventTime:40});h.restore();assert.ok(h.sounds.some(s=>s[0]==='genius-end'&&s[1]===40));h.get('#genius-ending-back').onclick();assert.ok(h.sounds.some(s=>s[0]==='stop'));console.log('Passed: replacement wave-dot caption and scene-clock sound integration.');

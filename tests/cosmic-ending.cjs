@@ -28,3 +28,7 @@ let s=story();s.api.beginCosmicEnd();assert.equal(s.p().iq,-67);assert.equal(s.t
 // No actual track metadata means no fabricated final frame or premature exit.
 s=story(ending);s.setDuration(NaN);s.api.restore();s.setTime(145);s.tick();assert.deepEqual(s.exits,[]);
 console.log('Passed: exact question gate and 6/7 sequence, live seventh choice, keyboard/backtracking, test/cloud/negative-IQ saves, old-ending isolation, 21–22s hands, audio-clock outro, seek restore, replay pause and exit cleanup.');
+
+assert.equal(C.frame(0).hero,0);assert.equal(C.frame(5.5).hero,1);assert.equal(C.frame(5.5).shade,0);assert.equal(C.frame(9).shade,1);assert.equal(C.frame(10).transform,0);assert.equal(C.frame(15).transform,1);
+let roomFrames=[];const gradient={addColorStop(){}};const ctx=new Proxy({createRadialGradient:()=>gradient},{get:(o,k)=>k in o?o[k]:(...args)=>{for(const v of args)if(typeof v==='number')assert.ok(Number.isFinite(v),String(k))},set:(o,k,v)=>(o[k]=v,true)});const canvas={width:1200,height:700,getBoundingClientRect:()=>({width:1200,height:700})};for(const t of [0,2,4,5.5,7,9,11,22])C.draw(ctx,canvas,t,93.061,false,{classroom:(c,t,f)=>roomFrames.push({t,iq:f.iq,hero:f.hero})});assert.equal(roomFrames[0].iq,-67);assert.ok(roomFrames.some(f=>f.t===4&&f.hero>0));assert.ok(roomFrames.every(f=>f.t<9));
+console.log('Passed: monitor and shocked-classroom opening, first transformation, room fade and later monochrome transformation before 21–22s hands.');

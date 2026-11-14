@@ -7,7 +7,7 @@
   if(phase==='school'){if(iq<40){steps(13.05,16.5,.29);once(13,'door',.7)}else if(iq>=80)steps(9.1,12.9,.5);steps(17.1,19.9);once(20,'cloth');repeat(.4,16,1,'clock',-.6)}
   if(phase==='quiet-day'){steps(.15,5.9,.5);steps(12.1,15.9);steps(24.1,27.9);once(12,'door',-.6);once(16.1,'notification',.25);repeat(18,19.5,.24,'key',-.3);once(28,'cloth');repeat(.8,11,5.8,'bird',.5)}
   if(phase==='sleep')once(.15,'cloth');
-  if(phase==='cycle'){repeat(.55,22.2,.55,'paper',.3);repeat(.95,21,.58,'step',-.4)}
+  if(phase==='cycle'){repeat(22/36,22.01,22/36,'paper',.3);repeat(.95,21,.58,'step',-.4)}
   if(phase==='resolve'){steps(5.1,8.9);once(9,'cloth')}
   if(phase==='genius-end'){once(23.05,'door',-.65);steps(23.25,26.8,.4);steps(32.2,35.8,.42);repeat(36.1,36.7,.2,'key',.25);once(37,'phone');repeat(49.2,59.9,1.2,'monitor',-.6);repeat(66.2,73.8,1.2,'monitor',-.6);once(60.2,'paper');once(62,'paper');once(64,'paper');once(75,'cloth');once(123.08,'wood',.15);repeat(142,Infinity,7.4,'bird',-.5)}
   if(phase==='happy-end'){steps(8.1,12.1,.5);steps(15.1,18.9,.5);repeat(1,6.7,.27,'clap');repeat(22.4,27,.19,'key',.3);repeat(29.5,33,.33,'clap');once(36.3,'door',-.55);repeat(16,21,4.7,'bird',.5);repeat(50,58,5.7,'bird',-.6)}

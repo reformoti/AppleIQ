@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),S=require('../sound-effects.js'),E=require('../genius-ending.js');
-assert.equal(E.at(16).caption,'. . .');assert.equal(E.at(9).caption,'Що я накоїв?');
+assert.equal(S.cues('cycle',.54,.56).some(e=>e.kind==='paper'),false);assert.equal(S.cues('cycle',.6,.63).some(e=>e.kind==='paper'),true);assert.equal(E.at(16).caption,'. . .');assert.equal(E.at(9).caption,'Що я накоїв?');
 assert.ok(S.cues('genius-end',123,123.2).some(e=>e.kind==='wood'));
 assert.equal(S.cues('genius-end',123.2,123.3).length,0);
 assert.deepEqual(S.ambience('genius-end',39.99),['room']);assert.deepEqual(S.ambience('genius-end',40),['traffic','siren']);assert.deepEqual(S.ambience('genius-end',49),['hospital']);assert.deepEqual(S.ambience('genius-end',123),[]);assert.deepEqual(S.ambience('genius-end',138),[]);assert.deepEqual(S.ambience('genius-end',147),['wind']);

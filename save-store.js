@@ -12,6 +12,7 @@
   if(key!==STORY)return false;const failed=p.iq===-1&&p.ultimateStatus==='failed'&&p.phase==='vegetable',cosmic=p.iq===-67&&p.phase==='cosmic-end';
   if(p.version!==1||!PHASES.includes(p.phase)||!int(p.step,0,5)||!int(p.iq,8,250)&&!failed&&!cosmic||!number(p.filmTime,0,36)||!number(p.potential,0,1e30)&&!(failed&&p.potential===-1000))return false;
   const bounds={qualityLevel:42,speedLevel:80,appleCount:9,shakeLevel:24,imaginationLevel:24,focusLevel:16,synergyLevel:12,lightLevel:3,shadowLevel:3,waterLevel:3,retakeCount:1e6};for(const[k,max]of Object.entries(bounds))if(p[k]!==undefined&&!int(p[k],k==='appleCount'?1:0,max))return false;
+  if(p.musicUnlocked!==undefined&&typeof p.musicUnlocked!=='boolean')return false;if(p.musicTrack!==undefined&&(![2,4].includes(p.musicTrack)||p.musicTrack===4&&p.musicUnlocked!==true))return false;
   if(p.geniusEndingSeen!==undefined&&typeof p.geniusEndingSeen!=='boolean')return false;
   if(p.eventTime!==undefined&&!number(p.eventTime,0,p.phase==='cosmic-end'?21600:p.phase==='genius-end'?147:100))return false;
   if(p.cosmicAudioTime!==undefined&&!number(p.cosmicAudioTime,0,21600))return false;

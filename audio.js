@@ -1,6 +1,6 @@
 'use strict';
 (()=>{
-const VERSION='4.33',KEY='appleiq-audio-01';let preferences={volume:.2,muted:false},track=0,paused=false,blocked=false,missing=false;
+const VERSION='4.34',KEY='appleiq-audio-01';let preferences={volume:.2,muted:false},track=0,paused=false,blocked=false,missing=false;
 const endedListeners=new Set();let pendingSeek=0,gain=1;
 const cinematic=()=>[3,5,6,7,8].includes(track);
 try{const p=JSON.parse((window.AppleSaveStore?window.AppleSaveStore.read(KEY):localStorage.getItem(KEY))||'null');if(p){const valid=n=>Number.isFinite(n)&&n>=0&&n<=1;preferences={volume:valid(p.volume)?p.volume:Array.isArray(p.volumes)&&[2,3].includes(p.volumes.length)&&p.volumes.every(valid)?p.volumes[0]:.2,muted:p.muted===true}}}catch{}
@@ -9,7 +9,7 @@ function save(){try{const text=JSON.stringify(preferences);if(window.AppleSaveSt
 function status(){const node=document.querySelector('#music-status');if(node)node.textContent=!track?'Музика почнеться після тесту.':missing?'Файл треку ще не додано до папки music.':blocked?'Натисніть «Відтворити», щоб увімкнути музику.':`Трек ${track} · ${paused?'пауза':'фонова музика'}`;const button=document.querySelector('#audio-play');if(button){button.disabled=!track;button.textContent=!track||paused||blocked||missing?'Відтворити':'Пауза'}}
 function apply(){window.AppleSFX?.preferences(preferences);audio.volume=preferences.volume*gain;audio.muted=preferences.muted;save()}
 async function play(){if(!track||paused||document.hidden||(cinematic()&&document.body.classList.contains('settings-open')))return;try{await audio.play();blocked=false}catch(e){blocked=e.name==='NotAllowedError';if(e.name!=='NotAllowedError'&&e.name!=='AbortError')missing=true}status()}
-function setTrack(id,options={}){if(![0,1,2,3,5,6,7,8].includes(id))return;if(track===id){if(id&&!paused)play();return}track=id;gain=Number.isFinite(options.gain)?Math.max(0,Math.min(1,options.gain)):1;missing=false;blocked=false;audio.pause();audio.loop=![3,8].includes(id);audio.preload=[3,8].includes(id)?'metadata':'none';pendingSeek=Number.isFinite(options.startAt)?Math.max(0,options.startAt):0;if(!id){audio.removeAttribute('src');audio.load();status();return}audio.src=new URL(`music/mp(${id}).mp3`,document.baseURI).href;apply();play();status()}
+function setTrack(id,options={}){if(![0,1,2,3,4,5,6,7,8].includes(id))return;if(track===id){if(id&&!paused)play();return}track=id;gain=Number.isFinite(options.gain)?Math.max(0,Math.min(1,options.gain)):1;missing=false;blocked=false;audio.pause();audio.loop=![3,8].includes(id);audio.preload=[3,8].includes(id)?'metadata':'none';pendingSeek=Number.isFinite(options.startAt)?Math.max(0,options.startAt):0;if(!id){audio.removeAttribute('src');audio.load();status();return}audio.src=new URL(`music/mp(${id}).mp3`,document.baseURI).href;apply();play();status()}
 audio.addEventListener('loadedmetadata',()=>{if(pendingSeek>0&&Number.isFinite(audio.duration)&&audio.duration>0){audio.currentTime=Math.min(pendingSeek,Math.max(0,audio.duration-.05));pendingSeek=0}});
 audio.addEventListener('ended',()=>{if(audio.loop||!track)return;for(const item of [...endedListeners])if(item.id===track)item.listener()});
 function onEnded(id,listener){const item={id,listener};endedListeners.add(item);return()=>endedListeners.delete(item)}

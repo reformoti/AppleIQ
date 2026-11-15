@@ -4,6 +4,7 @@
   const G=scope.AppleProgression||(typeof require==='function'?require('./progression.js'):null);
   const Orbit=scope.AppleOrbit||(typeof require==='function'?require('./rotation-controls.js'):null);
   const Leaf=scope.AppleLeaf||(typeof require==='function'?require('./leaf-model.js'):null);
+  const Visual=scope.AppleVisualSettings||(typeof require==='function'?require('./visual-settings.js'):null);
   const TAU=Math.PI*2,clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
   const skin={image:null,pixels:null,width:0,height:0,version:0};
   if(typeof scope.Image==='function'&&scope.document){const image=new scope.Image();image.onload=()=>{skin.image=image;skin.version++;try{const c=scope.document.createElement('canvas');c.width=image.naturalWidth;c.height=image.naturalHeight;const ctx=c.getContext('2d');ctx.drawImage(image,0,0);skin.pixels=ctx.getImageData(0,0,c.width,c.height).data;skin.width=c.width;skin.height=c.height}catch{}};image.src='assets/apple-skin.webp'}
@@ -73,19 +74,19 @@
     const columns=Math.ceil(Math.sqrt(count)),rows=Math.ceil(count/columns),cell=Math.min(count===1?280:140,width/(columns+.4),height/(rows+.2));
     return Array.from({length:count},(_,i)=>{const row=Math.floor(i/columns),n=Math.min(columns,count-row*columns);return{x:width/2+(i%columns-(n-1)/2)*cell,y:height/2+(row-(rows-1)/2)*cell+cell*.04,scale:cell*.38}});
   }
-  function shakeOffset(p,now,index=0,paused=false){const level=Math.max(0,Math.min(24,p.shakeLevel||0));if(!level||paused||p.reduceMotion)return{x:0,y:0};const amplitude=.6+level*.17,t=now/1000;return{x:(Math.sin(t*43+index*2)+Math.sin(t*67+index))*.5*amplitude,y:Math.sin(t*53+index*3)*amplitude}}
+  function shakeOffset(p,now,index=0,paused=false){const level=Math.max(0,Math.min(24,p.shakeLevel||0));if(!level||paused||p.reduceMotion||Visual?.enabled('shake')===false)return{x:0,y:0};const amplitude=.6+level*.17,t=now/1000;return{x:(Math.sin(t*43+index*2)+Math.sin(t*67+index))*.5*amplitude,y:Math.sin(t*53+index*3)*amplitude}}
   function layoutFor(p,width,height,now=0){const objects=layout(width,height,p.appleCount,p.badOrbitAngle);return objects.map((o,i)=>{const point=p.layoutUnlocked&&!Number.isFinite(p.badOrbitAngle)?p.applePositions?.[i]:null,shake=shakeOffset(p,now,i,p.arranging);if(point){o.x=clamp(point.x*width,o.scale*1.25,width-o.scale*1.25);o.y=clamp(point.y*height,o.scale*1.4,height-o.scale*1.4)}return{...o,x:o.x+shake.x,y:o.y+shake.y}})}
-  function bodyColor(p,now,index){if(!p.rainbow)return[.75,.035,.055];const period=p.cinematic?6000:10000,h=((now/period+index/Math.max(1,p.appleCount))%1+1)%1,k=n=>(n+h*6)%6;return[5,3,1].map(n=>.92*(1-.94*Math.max(0,Math.min(k(n),4-k(n),1))))}
+  function bodyColor(p,now,index){if(!p.rainbow)return[.75,.035,.055];if(p.renderColors===false||Visual?.enabled('colors')===false)now=0;const period=p.cinematic?6000:10000,h=((now/period+index/Math.max(1,p.appleCount))%1+1)%1,k=n=>(n+h*6)%6;return[5,3,1].map(n=>.92*(1-.94*Math.max(0,Math.min(k(n),4-k(n),1))))}
   // Фіксована студійна схема: тепле верхнє світло, холодне заповнення та контровий обідок.
   const KEY_LIGHT=normal([-.6,.85,1.3]),FILL_LIGHT=normal([.9,.1,.35]),RIM_LIGHT=normal([-.35,.5,-1]);
   const SHADOW_COLOR=[.005,.004,.009],BOUNCE_COLOR=[.18,.19,.24];
   const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
   function shadeSurface(n,position,kind,body,polish,lightLevel=0){
+    const base=kind<.5?body:kind<1.5?[.29,.16,.075]:Leaf.BASE;if(lightLevel<0)return kind>3.5?body.map(v=>clamp(v*.4+.25)):base;
     const view=normal([-position[0]*.12,-position[1]*.12,4.5-position[2]]),half=normal(KEY_LIGHT.map((v,i)=>v+view[i]));
     const key=Math.max(0,dot(n,KEY_LIGHT)),fill=Math.max(0,dot(n,FILL_LIGHT)),back=Math.max(0,dot(n,RIM_LIGHT));
     const fresnel=Math.pow(1-Math.max(0,dot(n,view)),3),spec=Math.max(0,dot(n,half));
     const broad=Math.pow(spec,18),gloss=Math.pow(spec,35+polish*85),ambient=.12+.12*(n[1]*.5+.5);
-    const base=kind<.5?body:kind<1.5?[.29,.16,.075]:Leaf.BASE;
     if(kind>1.5&&kind<2.5)return base.map((v,i)=>clamp(v*(.26+key*.68+fill*.15)+[.12,.18,.07][i]*back*.12+gloss*.045+fresnel*.025));
     if(kind>3.5)return body.map((v,i)=>clamp(v*(.28+key*.3)+[.025,.04,.055][i]+fresnel*.5+Math.pow(spec,76)*1.4+broad*.08));
     const detail=clamp(lightLevel,0,3)/3;
@@ -129,6 +130,7 @@
     ${Leaf.glsl}
     void main(){
       if(v_kind>2.5&&v_kind<3.5){vec2 uv=v_position.xy*vec2(1.7,2.1);float radius=length(uv);float shadow=min(.9,.62+u_shadow*.06)*exp(-dot(uv,uv)*3.5)*(1.-clamp((radius-.75)/.25,0.,1.));float halo=(.48+u_shadow*.045)*exp(-dot(v_position.xy,v_position.xy)*3.)*(1.-smoothstep(.7,1.,length(v_position.xy)));float a=shadow+halo*(1.-shadow);vec3 color=(vec3(.005,.004,.009)*shadow+vec3(.18,.19,.24)*halo*(1.-shadow))/max(a,.0001);gl_FragColor=vec4(color,a);return;}
+      if(u_light<0.){vec3 flatColor=v_kind<.5?u_body:v_kind<1.5?vec3(.29,.16,.075):leafMaterial(leafUV(v_surface));if(v_kind<.5&&u_skinReady>.5){vec2 uv=vec2(atan(v_surface.z/max(.1,u_depth),v_surface.x)/6.2831853+.5,acos(clamp(v_surface.y,-1.,1.))/3.14159265);vec3 photo=texture2D(u_skin,uv).rgb;flatColor=mix(photo,u_body*(.32+.8*max(photo.r,max(photo.g,photo.b))),u_rainbow);}if(v_kind>3.5)flatColor=u_body*.4+vec3(.25);gl_FragColor=vec4(flatColor,1.);return;}
       vec3 n=normalize(v_normal);if(!gl_FrontFacing)n=-n;
       vec3 light=normalize(vec3(-.6,.85,1.3)),fill=normalize(vec3(.9,.1,.35)),back=normalize(vec3(-.35,.5,-1.));
       vec3 view=normalize(vec3(-v_position.xy*.12,4.5-v_position.z));
@@ -165,15 +167,16 @@
     const onLost=e=>{e.preventDefault();lost=true},onRestored=()=>{if(!disposed)init()};
     canvas.addEventListener('webglcontextlost',onLost);canvas.addEventListener('webglcontextrestored',onRestored);
     return{draw(p,angle,now){
+      p=Visual?.apply(p)||p;
       if(disposed||lost)return;const b=canvas.getBoundingClientRect();if(!b.width||!b.height)return;
       const dpr=Math.min(Math.max(scope.devicePixelRatio||1,1.5),2),w=Math.round(b.width*dpr),h=Math.round(b.height*dpr);
       if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);
       const current=Math.round(G.appleVolume(p)*10);if(current!==level||wetLevel!==(p.waterLevel||0)){const data=createGeometry(current,false,p.cinematic,p.waterLevel||0);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);vertexCount=data.length/7;level=current;wetLevel=p.waterLevel||0}
       const objects=layoutFor(p,b.width,b.height,now);
       // М’які проєктовані тіні малюються до моделей, щоб не закривати плоди.
-      gl.uniform1f(uniforms.shadow,p.shadowLevel||0);gl.uniform1f(uniforms.light,p.lightLevel||0);
+      gl.uniform1f(uniforms.shadow,p.shadowLevel||0);gl.uniform1f(uniforms.light,p.renderLighting===false?-1:p.lightLevel||0);
       gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFuncSeparate(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);bind(shadowBuffer);
-      for(const o of objects){const shadow=shadowFootprint(o,p.shadowLevel||0);gl.uniform2f(uniforms.scale,shadow.rx*1.7*2/b.width,shadow.ry*2.1*2/b.height);gl.uniform2f(uniforms.offset,shadow.x*2/b.width-1,1-shadow.y*2/b.height);gl.drawArrays(gl.TRIANGLES,0,6)}
+      if(p.renderShadows!==false)for(const o of objects){const shadow=shadowFootprint(o,p.shadowLevel||0);gl.uniform2f(uniforms.scale,shadow.rx*1.7*2/b.width,shadow.ry*2.1*2/b.height);gl.uniform2f(uniforms.offset,shadow.x*2/b.width-1,1-shadow.y*2/b.height);gl.drawArrays(gl.TRIANGLES,0,6)}
       gl.disable(gl.BLEND);gl.enable(gl.DEPTH_TEST);bind(buffer);
       gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,skinTexture);if(skin.image&&skinVersion!==skin.version){gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,skin.image);skinVersion=skin.version}gl.uniform1i(uniforms.skin,0);gl.uniform1f(uniforms.skinReady,skinVersion>=0&&G.appleVolume(p)===1?1:0);gl.uniform1f(uniforms.depth,G.appleVolume(p));gl.uniform1f(uniforms.rainbow,p.rainbow?1:0);
       gl.uniform1f(uniforms.polish,G.appleVolume(p));
@@ -193,13 +196,14 @@
       vertices=new Float32Array(unique);indices=new Uint32Array(triangles);projected=new Float32Array(unique.length/7*10);level=current;wetLevel=water;
     }
     return{draw(p,angle,now){
+      p=Visual?.apply(p)||p;
       if(disposed||!c||now-last<1000/(p.combat?15:p.appleCount>3?24:40))return;last=now;
       const b=canvas.getBoundingClientRect();if(!b.width||!b.height)return;
       const dpr=p.combat?1:Math.min(Math.max(scope.devicePixelRatio||1,p.cinematic||p.appleCount===1?1.5:1.25),2),w=Math.round(b.width*dpr),h=Math.round(b.height*dpr);
       if(canvas.width!==w||canvas.height!==h||!image){canvas.width=w;canvas.height=h;image=c.createImageData(w,h);depthBuffer=new Float32Array(w*h)}
       image.data.fill(0);depthBuffer.fill(-Infinity);const pixels=image.data,current=Math.round(G.appleVolume(p)*10);if(level!==current||wetLevel!==(p.waterLevel||0))prepare(current,p.cinematic,p.waterLevel||0,p.combat);
       const objects=layoutFor(p,b.width,b.height,now);
-      for(const o of objects){const sh=shadowFootprint(o,p.shadowLevel||0),sx=sh.x*dpr,sy=sh.y*dpr,rx=sh.rx*dpr*1.7,ry=sh.ry*dpr*2.1;
+      if(p.renderShadows!==false)for(const o of objects){const sh=shadowFootprint(o,p.shadowLevel||0),sx=sh.x*dpr,sy=sh.y*dpr,rx=sh.rx*dpr*1.7,ry=sh.ry*dpr*2.1;
         for(let y=Math.max(0,Math.floor(sy-ry));y<=Math.min(h-1,Math.ceil(sy+ry));y++)for(let x=Math.max(0,Math.floor(sx-rx));x<=Math.min(w-1,Math.ceil(sx+rx));x++){const nx=(x+.5-sx)/rx,ny=(y+.5-sy)/ry,edge=clamp((Math.hypot(nx,ny)-.7)/.3),halo=(.48+(p.shadowLevel||0)*.045)*Math.exp(-(nx*nx+ny*ny)*3)*(1-edge*edge*(3-2*edge)),shadow=shadowOpacity(nx*1.7,ny*2.1,p.shadowLevel||0),alpha=shadow+halo*(1-shadow),pixel=(y*w+x)*4;if(alpha>0){const old=pixels[pixel+3]/255,total=alpha+old*(1-alpha);for(let channel=0;channel<3;channel++){const color=SHADOW_COLOR[channel]*shadow+BOUNCE_COLOR[channel]*halo*(1-shadow);pixels[pixel+channel]=(color+pixels[pixel+channel]/255*old*(1-alpha))/total*255}pixels[pixel+3]=total*255}}
 
       }
@@ -208,7 +212,7 @@
         for(let i=0,k=0;i<vertices.length;i+=7,k+=10){
           const v=transform(r,[vertices[i],vertices[i+1],vertices[i+2]]);let n=transform(r,[vertices[i+3],vertices[i+4],vertices[i+5]]);const kind=vertices[i+6];
           if(kind>=1.5&&n[2]<0)n=n.map(x=>-x);
-          const color=shadeSurface(n,v,kind,body,level/10,p.lightLevel||0);
+          const color=shadeSurface(n,v,kind,body,level/10,p.renderLighting===false?-1:p.lightLevel||0);
           const perspective=4.5/(4.5-v[2]);projected[k]=(o.x+v[0]*o.scale*perspective)*dpr;projected[k+1]=(o.y-v[1]*o.scale*perspective)*dpr;projected[k+2]=v[2];
           for(let channel=0;channel<3;channel++)projected[k+3+channel]=color[channel]*255;
           projected[k+6]=n[2];projected[k+7]=kind;const leafUV=kind>1.5&&kind<2.5?Leaf.uv([vertices[i],vertices[i+1],vertices[i+2]]):null;projected[k+8]=leafUV?leafUV[0]:Math.atan2(vertices[i+2]/Math.max(.1,level/10),vertices[i])/TAU+.5;projected[k+9]=leafUV?leafUV[1]:Math.acos(clamp(vertices[i+1],-1,1))/Math.PI;
@@ -224,7 +228,7 @@
           const av=projected[a+9],bv=projected[b+9],cv=projected[d+9],bodyMin=Math.min(...body),bodyMax=Math.max(...body);
           for(let y=top;y<=bottom;y++){
             let u=sx*(left+.5-cx)+sy*(y+.5-cy),v=tx*(left+.5-cx)+ty*(y+.5-cy);
-            for(let x=left;x<=right;x++,u+=sx,v+=tx){const q=1-u-v;if(u<-.00001||v<-.00001||q<-.00001)continue;const position=y*w+x,z=u*projected[a+2]+v*projected[b+2]+q*projected[d+2];if(z<depthBuffer[position])continue;depthBuffer[position]=z;const pixel=position*4;for(let channel=0;channel<3;channel++)pixels[pixel+channel]=u*projected[a+3+channel]+v*projected[b+3+channel]+q*projected[d+3+channel];if(projected[a+7]<.5&&level===10&&skin.pixels){const texU=((u*au+v*bu+q*cu)%1+1)%1,texV=clamp(u*av+v*bv+q*cv),at=(Math.min(skin.height-1,Math.floor(texV*skin.height))*skin.width+Math.min(skin.width-1,Math.floor(texU*skin.width)))*4,tr=skin.pixels[at]/255,tg=skin.pixels[at+1]/255,tb=skin.pixels[at+2]/255,photoMax=Math.max(tr,tg,tb),red=pixels[pixel]/255,green=pixels[pixel+1]/255,blue=pixels[pixel+2]/255,spec=Math.max(0,Math.min(red,green,blue)-bodyMin*.8),diffuse=Math.max(.1,(Math.max(red,green,blue)-spec)/bodyMax);pixels[pixel]=clamp((p.rainbow?body[0]*(.32+.8*photoMax):tr)*diffuse+spec)*255;pixels[pixel+1]=clamp((p.rainbow?body[1]*(.32+.8*photoMax):tg)*diffuse+spec)*255;pixels[pixel+2]=clamp((p.rainbow?body[2]*(.32+.8*photoMax):tb)*diffuse+spec)*255}if(projected[a+7]>1.5&&projected[a+7]<2.5){const leafColor=Leaf.material(u*au+v*bu+q*cu,u*av+v*bv+q*cv);for(let channel=0;channel<3;channel++)pixels[pixel+channel]=clamp(pixels[pixel+channel]/255*leafColor[channel]/Leaf.BASE[channel])*255}pixels[pixel+3]=255}
+            for(let x=left;x<=right;x++,u+=sx,v+=tx){const q=1-u-v;if(u<-.00001||v<-.00001||q<-.00001)continue;const position=y*w+x,z=u*projected[a+2]+v*projected[b+2]+q*projected[d+2];if(z<depthBuffer[position])continue;depthBuffer[position]=z;const pixel=position*4;for(let channel=0;channel<3;channel++)pixels[pixel+channel]=u*projected[a+3+channel]+v*projected[b+3+channel]+q*projected[d+3+channel];if(projected[a+7]<.5&&level===10&&skin.pixels){const texU=((u*au+v*bu+q*cu)%1+1)%1,texV=clamp(u*av+v*bv+q*cv),at=(Math.min(skin.height-1,Math.floor(texV*skin.height))*skin.width+Math.min(skin.width-1,Math.floor(texU*skin.width)))*4,tr=skin.pixels[at]/255,tg=skin.pixels[at+1]/255,tb=skin.pixels[at+2]/255,photoMax=Math.max(tr,tg,tb),red=pixels[pixel]/255,green=pixels[pixel+1]/255,blue=pixels[pixel+2]/255,spec=p.renderLighting===false?0:Math.max(0,Math.min(red,green,blue)-bodyMin*.8),diffuse=p.renderLighting===false?1:Math.max(.1,(Math.max(red,green,blue)-spec)/bodyMax);pixels[pixel]=clamp((p.rainbow?body[0]*(.32+.8*photoMax):tr)*diffuse+spec)*255;pixels[pixel+1]=clamp((p.rainbow?body[1]*(.32+.8*photoMax):tg)*diffuse+spec)*255;pixels[pixel+2]=clamp((p.rainbow?body[2]*(.32+.8*photoMax):tb)*diffuse+spec)*255}if(projected[a+7]>1.5&&projected[a+7]<2.5){const leafColor=Leaf.material(u*au+v*bu+q*cu,u*av+v*bv+q*cv);for(let channel=0;channel<3;channel++)pixels[pixel+channel]=clamp(pixels[pixel+channel]/255*leafColor[channel]/Leaf.BASE[channel])*255}pixels[pixel+3]=255}
           }
         }
       });c.putImageData(image,0,0);

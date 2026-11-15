@@ -15,8 +15,8 @@
  }
  function matrix(q){const[x,y,z,w]=G.normaliseRotation(q);return[1-2*(y*y+z*z),2*(x*y+z*w),2*(x*z-y*w),2*(x*y-z*w),1-2*(x*x+z*z),2*(y*z+x*w),2*(x*z+y*w),2*(y*z-x*w),1-2*(x*x+y*y)]}
  function cssMatrix(q){const m=matrix(q);return'matrix3d('+[m[0],-m[1],m[2],0,-m[3],m[4],-m[5],0,m[6],-m[7],m[8],0,0,0,0,1].join(',')+')'}
- const IDLE_VELOCITY=Object.freeze([.12,.18,.04]);
- function advance(q,velocity,seconds){const v=G.normaliseVelocity(velocity),speed=Math.hypot(...v),dt=Math.max(0,Math.min(1,Number(seconds)||0));if(!speed||!dt)return G.normaliseRotation(q);const angle=speed*dt/2;return multiply([...v.map(x=>x/speed*Math.sin(angle)),Math.cos(angle)],q)}
+ const IDLE_VELOCITY=Object.freeze([.6,.9,.2]);
+ function advance(q,velocity,seconds,multiplier=1){const v=G.normaliseVelocity(velocity),speed=Math.hypot(...v),dt=Math.max(0,Math.min(1,Number(seconds)||0));if(!speed||!dt)return G.normaliseRotation(q);const angle=speed*dt*Math.max(0,Number.isFinite(multiplier)?multiplier:1)/2;return multiply([...v.map(x=>x/speed*Math.sin(angle)),Math.cos(angle)],q)}
  function angularVelocity(before,after,seconds){let delta=multiply(after,[-before[0],-before[1],-before[2],before[3]]);if(delta[3]<0)delta=delta.map(x=>-x);const length=Math.hypot(...delta.slice(0,3));if(length<1e-9)return[0,0,0];const rate=2*Math.atan2(length,delta[3])/Math.max(.008,Math.min(.15,seconds||.016));return G.normaliseVelocity(delta.slice(0,3).map(x=>x/length*rate))}
  function attach(target,options){
   const doc=target.ownerDocument,view=doc.defaultView;let pointer=null,previous=null,disposed=false,lastTime=0,lastMove=0,velocity=[0,0,0];
@@ -34,7 +34,7 @@
   const blur=()=>finish(true);
   const subscriptions=[[target,'pointerdown',down],[doc,'pointermove',move],[doc,'pointerup',up],[doc,'pointercancel',cancel],[target,'lostpointercapture',up],[target,'keydown',key],[doc,'visibilitychange',visibility],[view,'blur',blur]];
   for(const[node,event,handler]of subscriptions)node?.addEventListener(event,handler);
-  return{tick(seconds){if(!enabled()||pointer!==null||!Number.isFinite(seconds)||seconds<=0)return false;let spin=getVelocity();if(Math.hypot(...spin)<.01){spin=[...IDLE_VELOCITY];setVelocity(spin)}options.change(advance(options.rotation(),spin,seconds));return true},dispose(){if(disposed)return;finish(true);disposed=true;for(const[node,event,handler]of subscriptions)node?.removeEventListener(event,handler)}};
+  return{tick(seconds){if(!enabled()||pointer!==null||!Number.isFinite(seconds)||seconds<=0)return false;let spin=getVelocity();if(Math.hypot(...spin)<.01){spin=[...IDLE_VELOCITY];setVelocity(spin)}options.change(advance(options.rotation(),spin,seconds,options.speed?.()??1));return true},dispose(){if(disposed)return;finish(true);disposed=true;for(const[node,event,handler]of subscriptions)node?.removeEventListener(event,handler)}};
  }
  const api=Object.freeze({multiply,project,turn,matrix,cssMatrix,advance,angularVelocity,IDLE_VELOCITY,attach});scope.AppleOrbit=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

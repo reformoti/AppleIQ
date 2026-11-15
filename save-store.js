@@ -8,7 +8,7 @@
  let status={state:'empty',savedAt:null},bannerTimer;const listeners=new Set();
  function valid(key,p){if(!object(p))return false;
   if(key===TEST)return int(p.index,0,20)&&Array.isArray(p.responses)&&p.responses.length===20&&(COSMIC?COSMIC.validResponses(p.responses):p.responses.every(v=>v===null||int(v,0,5)))&&number(p.elapsed,0,1e15)&&(p.round===undefined||int(p.round,0,1e6))&&(p.pendingRetake===undefined||typeof p.pendingRetake==='boolean')&&(p.format===undefined||typeof p.format==='string'&&p.format.length<=80);
-  if(key===AUDIO)return (number(p.volume,0,1)||Array.isArray(p.volumes)&&[2,3].includes(p.volumes.length)&&p.volumes.every(v=>number(v,0,1)))&&(p.muted===undefined||typeof p.muted==='boolean');
+  if(key===AUDIO)return (number(p.volume,0,1)||Array.isArray(p.volumes)&&[2,3].includes(p.volumes.length)&&p.volumes.every(v=>number(v,0,1)))&&(p.muted===undefined||typeof p.muted==='boolean')&&(p.effects===undefined||object(p.effects)&&Object.keys(p.effects).every(k=>['shake','water','shadows','colors','lighting'].includes(k)&&typeof p.effects[k]==='boolean'));
   if(key!==STORY)return false;const failed=p.iq===-1&&p.ultimateStatus==='failed'&&p.phase==='vegetable',cosmic=p.iq===-67&&p.phase==='cosmic-end';
   if(p.version!==1||!PHASES.includes(p.phase)||!int(p.step,0,5)||!int(p.iq,8,250)&&!failed&&!cosmic||!number(p.filmTime,0,36)||!number(p.potential,0,1e30)&&!(failed&&p.potential===-1000))return false;
   const bounds={qualityLevel:42,speedLevel:80,appleCount:9,shakeLevel:24,imaginationLevel:24,focusLevel:16,synergyLevel:12,lightLevel:3,shadowLevel:3,waterLevel:3,retakeCount:1e6};for(const[k,max]of Object.entries(bounds))if(p[k]!==undefined&&!int(p[k],k==='appleCount'?1:0,max))return false;

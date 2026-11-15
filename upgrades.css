@@ -76,3 +76,10 @@
 @media(prefers-reduced-motion:reduce){.music-player button{transition:none}}
 @media(max-width:700px) and (max-height:650px){.mind-root.step-5 .potential{top:calc(44% + 120px);padding:8px 16px}}
 @media(min-width:701px) and (max-height:600px){.mind-root.step-5 .training-object-stage:not(.layout-space){height:220px;top:40%}.mind-root.step-5 .potential{top:calc(40% + 110px);padding:8px 20px}}
+
+/* Вільні яблука залишаються в межах сцени, показники й кнопки — поза нею. */
+.mind-root.step-5.has-layout .training-object-stage.layout-space{bottom:190px}
+.mind-root.step-5.has-layout.genius-training .training-object-stage.layout-space{top:202px}
+.mind-root.step-5.has-layout .potential{top:auto;bottom:70px}
+@media(max-width:700px){.mind-root.step-5.has-layout .potential{top:auto;bottom:100px}.mind-root.step-5.has-layout .training-object-stage.layout-space{bottom:190px}.mind-root.step-5.has-layout.genius-training .training-object-stage.layout-space{top:198px}}
+@media(max-height:600px) and (orientation:landscape){.mind-root.step-5 .layout-toggle{top:62px;right:20px}.mind-root.step-5 .battle-toggle{top:105px;right:20px}.mind-root.step-5.has-layout .training-object-stage.layout-space{top:155px;bottom:130px}.mind-root.step-5.has-layout .potential{top:auto;bottom:15px;left:auto;right:16px;transform:none;min-width:190px;padding:7px 14px}.mind-root.step-5>.music-player{left:16px;bottom:15px;transform:none}.mind-root.step-5 .training-hint{display:none}}

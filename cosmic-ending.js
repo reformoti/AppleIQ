@@ -18,7 +18,7 @@
   c.save();c.translate(800+Math.cos(a*.095)*470,250+Math.sin(a*.095)*100);c.rotate(reduced?0:Math.sin(a*.12)*.12);image(c,images.hole,-390,-215,780,430,.28+.06*beat,true);c.restore();
   if(!reduced)for(let i=0;i<5;i++){const phase=(a*.13+i*.23)%1;c.strokeStyle='#899ad323';c.lineWidth=1;c.beginPath();c.moveTo(1450-phase*1800,70+i*145);c.lineTo(1510-phase*1800,45+i*145);c.stroke()}
  }
- function draw(c,canvas,time,duration,reduced=false,images={}){const f=frame(time,duration,reduced),b=canvas.getBoundingClientRect(),dpr=Math.min(scope.devicePixelRatio||1,1.5);if(canvas.width!==Math.round(b.width*dpr)||canvas.height!==Math.round(b.height*dpr)){canvas.width=Math.round(b.width*dpr);canvas.height=Math.round(b.height*dpr)}c.setTransform(dpr,0,0,dpr,0,0);box(c,0,0,b.width,b.height,'#000');
+ function draw(c,canvas,time,duration,reduced=false,images={}){const f=frame(time,duration,reduced),b=canvas.getBoundingClientRect(),dpr=scope.AppleCinema?.rasterRatio(b.width,b.height,scope.devicePixelRatio)||Math.min(scope.devicePixelRatio||1,2);if(canvas.width!==Math.round(b.width*dpr)||canvas.height!==Math.round(b.height*dpr)){canvas.width=Math.round(b.width*dpr);canvas.height=Math.round(b.height*dpr)}c.setTransform(dpr,0,0,dpr,0,0);box(c,0,0,b.width,b.height,'#000');
   if(f.stage==='black')return f;
   if(f.stage==='white'){box(c,0,0,b.width,b.height,reduced?'#b7b7bf':'#fff');return f}
   const fit=Math.min(b.width/1600,b.height/900);c.save();c.translate((b.width-1600*fit)/2,(b.height-900*fit)/2);c.scale(fit,fit);c.beginPath();c.rect(0,0,1600,900);c.clip();

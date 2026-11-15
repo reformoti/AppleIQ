@@ -1,0 +1,83 @@
+/* Shared film language: ink blue, aged paper and restrained amber accents. */
+:root{--bg:#0d1118;--surface:#151b24;--hover:#202936;--border:#2d3540;--text:#e6e4dc;--muted:#89939d;--soft:#b1b8ba;--film-amber:#c6ad82;--film-blue:#9ab4bd}
+body{background:radial-gradient(ellipse at 60% -20%,#24313d70,transparent 65%),var(--bg)}
+.brand-dot{color:var(--film-amber)}
+.wordmark{color:#eee7d9}
+.progress-fill{background:linear-gradient(90deg,#7c9aa1,#d2b78b)}
+.matrix-answer{border-color:#303b47;background:#141b25;transition:border-color .15s,background .15s,transform .15s;min-height:74px}
+.matrix-answer:hover{background:#202d3a;border-color:#8ba9b4;transform:translateY(-2px)}
+.matrix-answer.selected{border-color:#d1b788;background:#302c26;box-shadow:inset 0 0 0 1px #d1b78833}
+.reasoning-cell{background:#151e29;border-color:#34424e}
+.matrix-next{min-height:44px;border-radius:7px}
+.matrix-controls{gap:14px}
+.matrix-back{min-height:44px}
+.choice-letter{color:#afb9ba}
+.result-value{color:#e4d1ad}
+.settings-toggle{background:#14202be6;border-color:#64747e88;color:#c4c8bc;width:36px;height:36px;box-shadow:0 4px 16px #0003;backdrop-filter:none}
+.settings-dialog{width:min(440px,92vw);max-height:88dvh;border-color:#65717b80;border-radius:12px;padding:26px;background:linear-gradient(145deg,#1d2630,#111a24 80%);color:#e0e1d8;scrollbar-color:#68777b #15202b;scrollbar-width:thin;overscroll-behavior:contain}
+.settings-dialog::backdrop{background:#040a12b8;backdrop-filter:blur(4px)}
+.settings-dialog .panel-heading{position:sticky;top:-26px;z-index:3;background:#19232f;margin:-26px -26px 18px;padding:23px 26px 15px;border-bottom:1px solid #5c6e7040}
+.panel-heading h2{font-size:20px;letter-spacing:-.03em;color:#e9dfcb}
+.panel-close{min-width:36px;min-height:36px;border:1px solid #72858a3d;border-radius:7px;color:#d2d6ce}
+.panel-close:hover{background:#30404e}
+.settings-version{color:#b0bec0}.settings-version strong{color:#e0c697}
+.settings-dialog summary{min-height:44px;align-content:center;color:#d0d9d5;cursor:pointer;line-height:1.6}
+.settings-dialog details[open]>summary{color:#e4c796}
+.settings-dialog details{border-color:#78868436}
+.settings-dialog input[type=range],.settings-dialog input[type=checkbox]{accent-color:#c5ad85}
+.settings-dialog .neutral-button,.settings-dialog button[id^=effect-]{min-height:38px;border-radius:6px}
+.settings-dialog button[aria-pressed=true]{background:#3a403e;border-color:#b5bca16b;color:#e6e4cf}
+.settings-dialog .game-achievements-list{line-height:1.6}
+.settings-dialog [role=listitem]{padding:10px 0;border-bottom:1px solid #71868b22}
+.settings-dialog [role=listitem] strong{font-weight:600}
+.settings-dialog .panel-intro{color:#a1afb6}
+.neutral-button{background:#24323e;border-color:#64748073;color:#d7dbd4}
+.neutral-button:hover{background:#344553;border-color:#b4bcb6}
+.film-root,.happy-root{background:#090f18!important}
+.film-top,.happy-top{background:#0e1721;color:#b6bdb6;border-bottom:1px solid #bba88223;letter-spacing:.18em}
+.film-bottom{background:linear-gradient(#101925,#0c131d);border-top:1px solid #bba8821f}
+.film-bottom p{color:#d5d6cb;font-size:14px;line-height:1.75;text-wrap:pretty}
+.film-skip{min-height:44px;padding:10px 16px;border:1px solid #6e7c7d66;border-radius:6px;color:#cdd6d1;background:#1b2833}
+.film-progress>div{background:#b5ad8e}
+.happy-caption{color:#ede0c8;text-shadow:0 2px 9px #101926}
+.mind-root{background:radial-gradient(ellipse at 50% 40%,#1f2b3d3b,transparent 65%),#080d15!important}
+.mind-root .training-object-stage{isolation:isolate}
+.mind-chapter{color:#9ba9af;letter-spacing:.17em}
+.real-iq>span:first-child{color:#a6b4b7}.real-iq>strong{color:#ead9b9}
+.potential>span{color:#a1b5b9}.potential>strong{color:#e5dbc7;font-variant-numeric:tabular-nums}
+.training-hint{color:#9aabb2!important}
+.transform-toggle,.layout-toggle,.battle-toggle{border-color:#7f8a8063;background:#182431e8;color:#d7d9ca;min-height:42px;box-shadow:0 4px 15px #0002}
+.transform-toggle:hover,.layout-toggle:hover,.battle-toggle:hover{border-color:#c0b08c;background:#293b49}
+.upgrade-panel,.transformation-panel,.upgrade-thought,.ultimate-panel{background:linear-gradient(145deg,#1b2734,#121b25);border-color:#69808b59;border-radius:12px}
+.upgrade-panel button{min-height:40px}
+.arena-hub-root{background:radial-gradient(ellipse at 76% 12%,#31425750,transparent 55%),#0b121c!important}
+.arena-hub-top{color:#b0bcb9}
+.arena-hub-panel h1{font-family:Georgia,serif;color:#e6d5b3;letter-spacing:-.035em}
+.arena-next{background:linear-gradient(120deg,#25354266,#19232c22);padding:26px;border:1px solid #6b7f7852;border-radius:10px;margin-bottom:18px}
+.arena-next>button{right:24px}
+.arena-rival{border-color:#63747d38;padding-top:13px;padding-bottom:13px}
+.arena-rival.current{background:#bba67a0c;border-color:#c7b18470;border-radius:7px}
+.arena-rival.defeated{opacity:.72}
+.arena-rival canvas{image-rendering:auto}
+.arena-hud,.arena-controls{background:#0e1722}
+.arena-health{height:5px;border-radius:3px;background:#33404a}
+.arena-health i{background:linear-gradient(90deg,#6a9b8b,#c0d0a9)}
+.arena-enemy-health .arena-health i{background:linear-gradient(90deg,#ad7d63,#e0c1a0)}
+.arena-round-end{background:#0e1925e8;backdrop-filter:blur(5px)}
+.effects-no-lighting .mind-root{background:#080d15!important}
+.effects-no-shadows .settings-toggle,.effects-no-shadows .transform-toggle,.effects-no-shadows .layout-toggle,.effects-no-shadows .battle-toggle{box-shadow:none}
+@media(max-width:700px){
+ .settings-dialog{padding:22px;width:min(440px,94vw)}
+ .settings-dialog .panel-heading{top:-22px;margin:-22px -22px 16px;padding:17px 22px 13px}
+ .film-bottom p{font-size:12px}.film-bottom{padding-inline:18px}
+ .film-top,.happy-top{font-size:9px;letter-spacing:.12em}
+ .matrix-answer{min-height:62px}.matrix-answer:hover{transform:none}
+ .arena-next{padding:20px}.arena-next>button{right:auto}
+ .arena-rival{gap:9px}.arena-rival strong{overflow-wrap:anywhere}
+}
+@media(prefers-reduced-motion:reduce){.matrix-answer{transition:none}.matrix-answer:hover{transform:none}}
+
+.upgrade-card{border-color:#63798435;border-radius:7px;background:#b6c5b504}.upgrade-plus{border-color:#82978e70;background:#2b3b46;color:#dac9a8;min-width:38px;min-height:38px}.upgrade-plus:hover{background:#455348}.upgrade-name{color:#d3ddd6}.upgrade-value{color:#b3c3c3}
+
+.transformation-panel .panel-heading{border-bottom:1px solid #6279853b;padding-bottom:20px}.transformation-panel .upgrade-list{gap:8px}.transformation-panel .shop-balance{color:#d5c39d}
+.achievement-entry{opacity:.78}.achievement-entry.is-earned{opacity:1}.achievement-entry.is-earned strong{color:#d9dfbd}.achievement-help{opacity:.8}

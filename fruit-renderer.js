@@ -3,6 +3,7 @@
 ((scope)=>{
   const G=scope.AppleProgression||(typeof require==='function'?require('./progression.js'):null);
   const Orbit=scope.AppleOrbit||(typeof require==='function'?require('./rotation-controls.js'):null);
+  const Leaf=scope.AppleLeaf||(typeof require==='function'?require('./leaf-model.js'):null);
   const TAU=Math.PI*2,clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
   const skin={image:null,pixels:null,width:0,height:0,version:0};
   if(typeof scope.Image==='function'&&scope.document){const image=new scope.Image();image.onload=()=>{skin.image=image;skin.version++;try{const c=scope.document.createElement('canvas');c.width=image.naturalWidth;c.height=image.naturalHeight;const ctx=c.getContext('2d');ctx.drawImage(image,0,0);skin.pixels=ctx.getImageData(0,0,c.width,c.height).data;skin.width=c.width;skin.height=c.height}catch{}};image.src='assets/apple-skin.webp'}
@@ -15,7 +16,7 @@
       points.push(x.toFixed(2)+','+y.toFixed(2));
     }
     const stemY=24+24*form;
-    return `<svg viewBox="0 0 200 210" aria-hidden="true"><defs><linearGradient id="fruit-${index}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d02a36"/><stop offset="1" stop-color="#8a111b"/></linearGradient></defs><polygon points="${points.join(' ')}" fill="url(#fruit-${index})"/>${G.hasStem(p)?`<path class="fruit-stem" d="M100 ${stemY+2} Q99 ${stemY-13} 109 ${stemY-22}" fill="none" stroke="#856044" stroke-width="5" stroke-linecap="round"/>${form?`<path class="fruit-leaf" opacity="${form}" d="M106 ${stemY-12} Q124 ${stemY-35} 140 ${stemY-23} Q132 ${stemY-4} 106 ${stemY-12}" fill="#4e6c38"/>`:''}`:''}</svg>`;
+    return `<svg viewBox="0 0 200 210" aria-hidden="true"><defs><linearGradient id="fruit-${index}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d02a36"/><stop offset="1" stop-color="#8a111b"/></linearGradient></defs><polygon points="${points.join(' ')}" fill="url(#fruit-${index})"/>${G.hasStem(p)?`<path class="fruit-stem" d="M100 ${stemY+2} Q99 ${stemY-13} 109 ${stemY-22}" fill="none" stroke="#856044" stroke-width="5" stroke-linecap="round"/>${form?`${Leaf.svg(index,stemY,form)}`:''}`:''}</svg>`;
   }
   function normal(v){const length=Math.hypot(...v)||1;return v.map(x=>x/length)}
   function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}
@@ -43,10 +44,10 @@
       const params=[[j,i],[j+1,i],[j+1,i+1],[j,i+1]].map(([a,b])=>[a/8,b*TAU/12]);
       quad(params.map(([t,u])=>stemPoint(t,u)),params.map(([,u])=>normal([Math.cos(u),-.13,Math.sin(u)/depth])),1);
     }
-    const leafPoint=(t,w)=>[.13+t*.57,1.08+.15*Math.sin(t*Math.PI)+w*.045,(.02+w*.16*Math.sin(t*Math.PI))*depth];
-    for(let j=0;j<16;j++)for(const side of[-1,1]){
-      const pts=[leafPoint(j/16,0),leafPoint((j+1)/16,0),leafPoint((j+1)/16,side),leafPoint(j/16,side)];
-      const n=normal(cross(minus(pts[1],pts[0]),minus(pts[2],pts[0])));quad(pts,[n,n,n,n],2);
+    const leafRows=combat?24:low?40:64,leafColumns=combat?4:low?6:8;
+    for(let j=0;j<leafRows;j++)for(let i=0;i<leafColumns;i++){
+      const uv=[[j,i],[j+1,i],[j+1,i+1],[j,i+1]].map(([a,b])=>[a/leafRows,-1+b*2/leafColumns]);
+      quad(uv.map(([t,w])=>Leaf.point(t,w,depth)),uv.map(([t,w])=>Leaf.normal(t,w,depth)),2);
     }
     // Підняті над шкіркою об’ємні краплі; геометрія рухається разом із плодом.
     const drops=[0,12,22,34][clamp(Math.round(waterLevel),0,3)],rings=combat?4:low?6:8,segments=combat?6:low?10:14;
@@ -84,7 +85,8 @@
     const key=Math.max(0,dot(n,KEY_LIGHT)),fill=Math.max(0,dot(n,FILL_LIGHT)),back=Math.max(0,dot(n,RIM_LIGHT));
     const fresnel=Math.pow(1-Math.max(0,dot(n,view)),3),spec=Math.max(0,dot(n,half));
     const broad=Math.pow(spec,18),gloss=Math.pow(spec,35+polish*85),ambient=.12+.12*(n[1]*.5+.5);
-    const base=kind<.5?body:kind<1.5?[.29,.16,.075]:[.19,.38,.08];
+    const base=kind<.5?body:kind<1.5?[.29,.16,.075]:Leaf.BASE;
+    if(kind>1.5&&kind<2.5)return base.map((v,i)=>clamp(v*(.26+key*.68+fill*.15)+[.12,.18,.07][i]*back*.12+gloss*.045+fresnel*.025));
     if(kind>3.5)return body.map((v,i)=>clamp(v*(.28+key*.3)+[.025,.04,.055][i]+fresnel*.5+Math.pow(spec,76)*1.4+broad*.08));
     const detail=clamp(lightLevel,0,3)/3;
     const freckle=Math.pow(Math.max(0,Math.sin(position[0]*91)*Math.sin(position[1]*83)*Math.sin(position[2]*71)),12)*.022*polish;
@@ -124,6 +126,7 @@
     varying vec3 v_surface;
     varying vec3 v_normal;
     varying float v_kind;
+    ${Leaf.glsl}
     void main(){
       if(v_kind>2.5&&v_kind<3.5){vec2 uv=v_position.xy*vec2(1.7,2.1);float radius=length(uv);float shadow=min(.9,.62+u_shadow*.06)*exp(-dot(uv,uv)*3.5)*(1.-clamp((radius-.75)/.25,0.,1.));float halo=(.48+u_shadow*.045)*exp(-dot(v_position.xy,v_position.xy)*3.)*(1.-smoothstep(.7,1.,length(v_position.xy)));float a=shadow+halo*(1.-shadow);vec3 color=(vec3(.005,.004,.009)*shadow+vec3(.18,.19,.24)*halo*(1.-shadow))/max(a,.0001);gl_FragColor=vec4(color,a);return;}
       vec3 n=normalize(v_normal);if(!gl_FrontFacing)n=-n;
@@ -132,7 +135,8 @@
       float key=max(0.,dot(n,light)),fillAmount=max(0.,dot(n,fill)),backAmount=max(0.,dot(n,back));
       float spec=max(0.,dot(n,normalize(light+view))),broad=pow(spec,18.),gloss=pow(spec,35.+u_polish*85.);
       float fresnel=pow(1.-max(0.,dot(n,view)),3.);
-      vec3 base=v_kind<.5?u_body:v_kind<1.5?vec3(.29,.16,.075):vec3(.19,.38,.08);
+      if(v_kind>1.5&&v_kind<2.5){vec3 blade=leafMaterial(leafUV(v_surface));vec3 leafLight=blade*(.26+key*.68+fillAmount*.15)+vec3(.12,.18,.07)*backAmount*.12+gloss*.045+fresnel*.025;gl_FragColor=vec4(clamp(leafLight,0.,1.),1.);return;}
+      vec3 base=v_kind<.5?u_body:vec3(.29,.16,.075);
       if(v_kind<.5&&u_skinReady>.5){vec2 uv=vec2(atan(v_surface.z/max(.1,u_depth),v_surface.x)/6.2831853+.5,acos(clamp(v_surface.y,-1.,1.))/3.14159265);vec3 photo=texture2D(u_skin,uv).rgb;base=mix(photo,u_body*(.32+.8*max(photo.r,max(photo.g,photo.b))),u_rainbow);}
       if(v_kind>3.5){gl_FragColor=vec4(clamp(u_body*(.28+key*.3)+vec3(.025,.04,.055)+fresnel*.5+pow(spec,76.)*1.4+broad*.08,0.,1.),1.);return;}
       float detail=u_light/3.;
@@ -207,7 +211,7 @@
           const color=shadeSurface(n,v,kind,body,level/10,p.lightLevel||0);
           const perspective=4.5/(4.5-v[2]);projected[k]=(o.x+v[0]*o.scale*perspective)*dpr;projected[k+1]=(o.y-v[1]*o.scale*perspective)*dpr;projected[k+2]=v[2];
           for(let channel=0;channel<3;channel++)projected[k+3+channel]=color[channel]*255;
-          projected[k+6]=n[2];projected[k+7]=kind;projected[k+8]=Math.atan2(vertices[i+2]/Math.max(.1,level/10),vertices[i])/TAU+.5;projected[k+9]=Math.acos(clamp(vertices[i+1],-1,1))/Math.PI;
+          projected[k+6]=n[2];projected[k+7]=kind;const leafUV=kind>1.5&&kind<2.5?Leaf.uv([vertices[i],vertices[i+1],vertices[i+2]]):null;projected[k+8]=leafUV?leafUV[0]:Math.atan2(vertices[i+2]/Math.max(.1,level/10),vertices[i])/TAU+.5;projected[k+9]=leafUV?leafUV[1]:Math.acos(clamp(vertices[i+1],-1,1))/Math.PI;
         }
         for(let at=0;at<indices.length;at+=3){
           const a=indices[at]*10,b=indices[at+1]*10,d=indices[at+2]*10;
@@ -220,7 +224,7 @@
           const av=projected[a+9],bv=projected[b+9],cv=projected[d+9],bodyMin=Math.min(...body),bodyMax=Math.max(...body);
           for(let y=top;y<=bottom;y++){
             let u=sx*(left+.5-cx)+sy*(y+.5-cy),v=tx*(left+.5-cx)+ty*(y+.5-cy);
-            for(let x=left;x<=right;x++,u+=sx,v+=tx){const q=1-u-v;if(u<-.00001||v<-.00001||q<-.00001)continue;const position=y*w+x,z=u*projected[a+2]+v*projected[b+2]+q*projected[d+2];if(z<depthBuffer[position])continue;depthBuffer[position]=z;const pixel=position*4;for(let channel=0;channel<3;channel++)pixels[pixel+channel]=u*projected[a+3+channel]+v*projected[b+3+channel]+q*projected[d+3+channel];if(projected[a+7]<.5&&level===10&&skin.pixels){const texU=((u*au+v*bu+q*cu)%1+1)%1,texV=clamp(u*av+v*bv+q*cv),at=(Math.min(skin.height-1,Math.floor(texV*skin.height))*skin.width+Math.min(skin.width-1,Math.floor(texU*skin.width)))*4,tr=skin.pixels[at]/255,tg=skin.pixels[at+1]/255,tb=skin.pixels[at+2]/255,photoMax=Math.max(tr,tg,tb),red=pixels[pixel]/255,green=pixels[pixel+1]/255,blue=pixels[pixel+2]/255,spec=Math.max(0,Math.min(red,green,blue)-bodyMin*.8),diffuse=Math.max(.1,(Math.max(red,green,blue)-spec)/bodyMax);pixels[pixel]=clamp((p.rainbow?body[0]*(.32+.8*photoMax):tr)*diffuse+spec)*255;pixels[pixel+1]=clamp((p.rainbow?body[1]*(.32+.8*photoMax):tg)*diffuse+spec)*255;pixels[pixel+2]=clamp((p.rainbow?body[2]*(.32+.8*photoMax):tb)*diffuse+spec)*255}pixels[pixel+3]=255}
+            for(let x=left;x<=right;x++,u+=sx,v+=tx){const q=1-u-v;if(u<-.00001||v<-.00001||q<-.00001)continue;const position=y*w+x,z=u*projected[a+2]+v*projected[b+2]+q*projected[d+2];if(z<depthBuffer[position])continue;depthBuffer[position]=z;const pixel=position*4;for(let channel=0;channel<3;channel++)pixels[pixel+channel]=u*projected[a+3+channel]+v*projected[b+3+channel]+q*projected[d+3+channel];if(projected[a+7]<.5&&level===10&&skin.pixels){const texU=((u*au+v*bu+q*cu)%1+1)%1,texV=clamp(u*av+v*bv+q*cv),at=(Math.min(skin.height-1,Math.floor(texV*skin.height))*skin.width+Math.min(skin.width-1,Math.floor(texU*skin.width)))*4,tr=skin.pixels[at]/255,tg=skin.pixels[at+1]/255,tb=skin.pixels[at+2]/255,photoMax=Math.max(tr,tg,tb),red=pixels[pixel]/255,green=pixels[pixel+1]/255,blue=pixels[pixel+2]/255,spec=Math.max(0,Math.min(red,green,blue)-bodyMin*.8),diffuse=Math.max(.1,(Math.max(red,green,blue)-spec)/bodyMax);pixels[pixel]=clamp((p.rainbow?body[0]*(.32+.8*photoMax):tr)*diffuse+spec)*255;pixels[pixel+1]=clamp((p.rainbow?body[1]*(.32+.8*photoMax):tg)*diffuse+spec)*255;pixels[pixel+2]=clamp((p.rainbow?body[2]*(.32+.8*photoMax):tb)*diffuse+spec)*255}if(projected[a+7]>1.5&&projected[a+7]<2.5){const leafColor=Leaf.material(u*au+v*bu+q*cu,u*av+v*bv+q*cv);for(let channel=0;channel<3;channel++)pixels[pixel+channel]=clamp(pixels[pixel+channel]/255*leafColor[channel]/Leaf.BASE[channel])*255}pixels[pixel+3]=255}
           }
         }
       });c.putImageData(image,0,0);

@@ -5,7 +5,7 @@ function harness(loaded,gpu=false){
  const uniforms=new Map();let frame;
  const gl=new Proxy({getShaderParameter:()=>true,getProgramParameter:()=>true,getAttribLocation:()=>0,getUniformLocation:(p,name)=>name,uniform1f:(name,value)=>uniforms.set(name,value),getExtension:()=>null},{get:(o,k)=>k in o?o[k]:()=>({})});
  const context={createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),putImageData:image=>frame=Uint8ClampedArray.from(image.data)};
- const window={AppleProgression:G,AppleOrbit:Orbit,document:{createElement:()=>({getContext:()=>({drawImage(){},getImageData:()=>({data:new Uint8ClampedArray([15,210,160,255])})})})}};
+ const window={AppleProgression:G,AppleOrbit:Orbit,AppleLeaf:require('../leaf-model.js'),document:{createElement:()=>({getContext:()=>({drawImage(){},getImageData:()=>({data:new Uint8ClampedArray([15,210,160,255])})})})}};
  window.Image=class{constructor(){this.naturalWidth=1;this.naturalHeight=1}set src(v){if(loaded)this.onload()}};
  vm.runInNewContext(source,{window,Uint8ClampedArray,Uint8Array,Float32Array,Uint32Array,Math,Map,Set});
  const canvas={dataset:{},getContext:kind=>kind==='webgl'?(gpu?gl:null):context,getBoundingClientRect:()=>({width:100,height:100}),addEventListener(){},removeEventListener(){}};

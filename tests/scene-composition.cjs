@@ -15,6 +15,6 @@ for(const [kind,variant,desk] of [['bedroom','story',545],['bedroom','genius',54
  else assert.ok(calls.some(x=>x.kind==='roundRect'&&x.a[0]===702&&x.a[1]===desk-13),'keyboard follows the scene desk height');
 }
 // Furniture is rendered before moving visitors, including while crossing the desk.
-const original=globalThis.AppleCinema;globalThis.AppleCinema={...C,room(...args){calls.push({kind:'decor'});return C.room(...args)}};
-try{for(const t of [25,26,27,29,34,36]){calls=[];E.draw(ctx,{width:1600,height:900,getBoundingClientRect:()=>({width:1600,height:900})},t,true);const decor=calls.findIndex(x=>x.kind==='decor'),faces=calls.map((x,i)=>x.kind==='ellipse'&&x.a[2]===30&&x.a[3]===36?i:-1).filter(i=>i>=0);assert.ok(decor>=0&&faces.length===2);assert.ok(faces.every(i=>i>decor),'decor cannot cover visitors');assert.equal(depth,0)}}finally{globalThis.AppleCinema=original}
+const original=globalThis.AppleCinema;globalThis.AppleCinema={...C,character(...args){calls.push({kind:'actor'});return C.character(...args)},room(...args){calls.push({kind:'decor'});return C.room(...args)}};
+try{for(const t of [25,26,27,29,34,36]){calls=[];E.draw(ctx,{width:1600,height:900,getBoundingClientRect:()=>({width:1600,height:900})},t,true);const decor=calls.findIndex(x=>x.kind==='decor'),faces=calls.map((x,i)=>x.kind==='actor'?i:-1).filter(i=>i>=0);assert.ok(decor>=0&&faces.length===2);assert.ok(faces.every(i=>i>decor),'decor cannot cover visitors');assert.equal(depth,0)}}finally{globalThis.AppleCinema=original}
 console.log('Passed: desk prop bounds, contained paper lines, visitor layering, bounded high-DPI rendering.');

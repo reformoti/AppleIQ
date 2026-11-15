@@ -9,7 +9,7 @@
   if(phase==='sleep')once(.15,'cloth');
   if(phase==='cycle'){repeat(22/36,22.01,22/36,'paper',.3);repeat(.95,21,.58,'step',-.4)}
   if(phase==='resolve'){steps(5.1,8.9);once(9,'cloth')}
-  if(phase==='genius-end'){once(23.05,'door',-.65);steps(23.25,26.8,.4);steps(32.2,35.8,.42);repeat(36.1,36.7,.2,'key',.25);once(37,'phone');repeat(49.2,59.9,1.2,'monitor',-.6);repeat(66.2,73.8,1.2,'monitor',-.6);once(60.2,'paper');once(62,'paper');once(64,'paper');once(75,'cloth');once(123.08,'wood',.15);repeat(142,Infinity,7.4,'bird',-.5)}
+  if(phase==='genius-end'){once(23.05,'door',-.65);steps(23.25,26.8,.4);once(32.2,'cloth');repeat(36.1,36.7,.2,'key',.25);once(37,'phone');repeat(49.2,59.9,1.2,'monitor',-.6);repeat(66.2,73.8,1.2,'monitor',-.6);once(60.2,'paper');once(62,'paper');once(64,'paper');once(75,'cloth');once(123.08,'wood',.15);repeat(142,Infinity,7.4,'bird',-.5)}
   if(phase==='happy-end'){steps(8.1,12.1,.5);steps(15.1,18.9,.5);repeat(1,6.7,.27,'clap');repeat(22.4,27,.19,'key',.3);repeat(29.5,33,.33,'clap');once(36.3,'door',-.55);repeat(16,21,4.7,'bird',.5);repeat(50,58,5.7,'bird',-.6)}
   if(phase==='cosmic-end'){once(.25,'notification',.1);once(3.6,'cloth')}
   if(phase==='genius-loss'){once(6,'cloth');repeat(13.4,25,1,'clock',-.6)}

@@ -54,7 +54,57 @@
   }
  }
  function keyboard(c,x,y,w=210,h=15){box(c,x-2,y-2,w+4,h+4,'#171d25',3);for(let row=0;row<3;row++)for(let i=0;i<14;i++)box(c,x+2+i*(w-4)/14,y+1+row*(h-2)/3,(w-9)/14-1,(h-4)/3-1,'#707984',.5)}
- function person(c,t,shirt,skin,headY=-203){const cloth=c.createLinearGradient(-33,-150,33,-65);cloth.addColorStop(0,'#00000024');cloth.addColorStop(.45,'#ffffff0d');cloth.addColorStop(1,'#00000032');c.fillStyle=cloth;c.beginPath();c.moveTo(-29,-148);c.quadraticCurveTo(0,-160,29,-148);c.lineTo(32,-68);c.quadraticCurveTo(0,-59,-32,-68);c.closePath();c.fill();const face=c.createRadialGradient(-12,headY-7,1,4,headY,36);face.addColorStop(0,'#fff2d81c');face.addColorStop(.7,'#00000000');face.addColorStop(1,'#4d292519');oval(c,0,headY+2,28,31,face);for(let i=0;i<7;i++){const x=-24+i*7;line(c,x,headY-29,x+5,headY-38+Math.sin(i)*3,'#b5a38a26',1)}oval(c,-33,headY+1,6,10,skin);oval(c,33,headY+1,6,10,skin);line(c,1,headY+1,-2,headY+9,'#83695b60',1.5);line(c,-14,headY-12,-6,headY-13,'#41352e80',1.5);line(c,6,headY-13,15,headY-12,'#41352e80',1.5);line(c,-20,-154,-6,-143,'#e1d1b22f',2);line(c,20,-154,6,-143,'#e1d1b22f',2);for(let i=0;i<3;i++)oval(c,3,-129+i*21,1.3,1.3,'#ded5bf60');line(c,-30,-118,-29,-82,'#00000018',3);line(c,23,-118,24,-78,'#ffffff0b',2);for(let i=0;i<3;i++){line(c,-25+i*4,-6,-20+i*4,-4,'#aeb9c13b',1);line(c,17+i*4,-6,22+i*4,-4,'#aeb9c13b',1)}line(c,-23,-86,-12,-91,'#00000022',1);line(c,17,-93,28,-88,'#ffffff14',1);line(c,-29,-10,-11,-10,'#d7c5aa40',1);line(c,16,-10,35,-10,'#d7c5aa40',1);line(c,-34,-137,-42,-113,'#ffffff17',1.4);line(c,31,-135,40,-113,'#0000001c',1.4);oval(c,-19,headY+10,6,3,'#c67f6917');oval(c,19,headY+10,6,3,'#c67f6917');for(const x of [-33,33])line(c,x,headY-2,x,headY+5,'#755e4d3d',1);for(let i=0;i<4;i++)line(c,-21+i*13,headY-25,-15+i*12,headY-31,'#d7c5a51c',.8)}
+ function person(c,t,shirt,skin,headY=-203){line(c,-27,-116,-28,-83,'#00000018',2);line(c,26,-115,27,-79,'#ffffff18',1.2);line(c,-22,-68,22,-68,'#e4d5b733',1);for(let i=0;i<3;i++)oval(c,1,-131+i*20,1.2,1.2,'#ded5bf60');line(c,-23,-84,-13,-88,'#00000024',1);line(c,18,-91,27,-87,'#ffffff20',1)}
+ // Shared faces keep expressions readable at scene scale, with a clean chin.
+ function face(c,t,{skin='#cba988',hair='#40322b',headY=-203,mood='neutral',kind='hero',variant=0,seed=0,reduced=false}={}){
+  const female=kind==='partner',kid=kind==='kid',shock=mood==='shock',laugh=mood==='laugh',sad=mood==='sad',sleep=mood==='sleep',hy=headY;
+  c.save();c.translate(0,hy);
+  if(female){for(const side of [-1,1]){c.save();c.scale(side,1);c.fillStyle=hair;c.beginPath();c.moveTo(22,-29);c.bezierCurveTo(42,-17,42,29,34,54);c.lineTo(23,48);c.quadraticCurveTo(29,16,24,-3);c.closePath();c.fill();line(c,34,5,32,42,'#bb957d22',1);c.restore()}}
+  for(const side of [-1,1]){oval(c,side*30,1,6,9,skin);line(c,side*32,-2,side*32,5,'#936a5738',1.2)}
+  // Taper the cheeks into the jaw instead of shading the whole lower face.
+  c.fillStyle=skin;c.beginPath();c.moveTo(0,-35);c.bezierCurveTo(26,-35,33,-22,31,0);c.bezierCurveTo(30,18,20,kid?32:29,0,kid?34:32);c.bezierCurveTo(-20,29,-30,18,-31,0);c.bezierCurveTo(-33,-22,-26,-35,0,-35);c.fill();
+  const light=c.createRadialGradient(-12,-10,1,-1,-3,35);light.addColorStop(0,'#fff6df30');light.addColorStop(1,'#fff6df00');oval(c,0,-1,29,30,light);
+  oval(c,-19,10,5.7,3,'#df8b791b');oval(c,19,10,5.7,3,'#df8b791b');
+  c.fillStyle=hair;c.beginPath();c.moveTo(-31,0);c.lineTo(-32,-19);c.bezierCurveTo(-31,-43,-8,-44,10,-36);c.bezierCurveTo(27,-37,35,-23,32,-5);c.lineTo(26,-10);
+  if(female){c.quadraticCurveTo(17,-24,6,-28);c.quadraticCurveTo(-4,-9,-26,-8)}else if(kid||variant===2){c.lineTo(17,-17);c.lineTo(6,-14);c.lineTo(0,-22);c.quadraticCurveTo(-12,-11,-26,-9)}else if(variant===1){c.quadraticCurveTo(18,-27,8,-21);c.quadraticCurveTo(-8,-9,-27,-15);c.lineTo(-27,-2)}else{c.quadraticCurveTo(16,-18,5,-22);c.lineTo(12,-15);c.quadraticCurveTo(-11,-18,-27,-23);c.lineTo(-27,-1)}c.closePath();c.fill();
+  for(let i=0;i<4;i++){c.strokeStyle='#d8bd9133';c.lineWidth=1;c.beginPath();c.moveTo(-22+i*8,-29-i%2*2);c.quadraticCurveTo(-7+i*7,-35,11+i*4,-25+i);c.stroke()}
+  const blinked=sleep?0:reduced?1:blink(t,seed),eyeY=sad?2:0;
+  for(const side of [-1,1]){const x=side*12;c.strokeStyle=hair;c.lineWidth=1.7;c.beginPath();c.moveTo(x-5,-10+(sad?side*2:shock?-3:0));c.quadraticCurveTo(x,-12+(shock?-3:0),x+5,-10-(sad?side*2:0));c.stroke();
+   if(sleep||blinked<.3||laugh){c.strokeStyle='#655047';c.lineWidth=1.6;c.beginPath();c.moveTo(x-4,eyeY+1);c.quadraticCurveTo(x,laugh?-3:3,x+4,eyeY+1);c.stroke()}else{oval(c,x,eyeY,shock?5.6:4.8,shock?7:3.3,'#f6eee2');oval(c,x+.7,eyeY+.3,2.25,shock?4.5:2.7,'#645647');oval(c,x+.9,eyeY+.5,1.2,2,'#282a2b');oval(c,x+.1,eyeY-1,.7,.7,'#fff9ed');line(c,x-4,eyeY-2,x+3,eyeY-2.2,'#5c493f',.9)}
+  }
+  c.strokeStyle='#946c563f';c.lineWidth=1.1;c.beginPath();c.moveTo(.5,3);c.quadraticCurveTo(-2,7,0,9);c.lineTo(3,9);c.stroke();
+  if(laugh){c.fillStyle='#87534b';c.beginPath();c.moveTo(-8,15);c.quadraticCurveTo(0,18,8,15);c.quadraticCurveTo(5,22,0,22);c.quadraticCurveTo(-5,22,-8,15);c.fill();c.fillStyle='#fff0db';c.beginPath();c.moveTo(-6.7,15.7);c.quadraticCurveTo(0,18,6.7,15.7);c.lineTo(4.8,18.7);c.quadraticCurveTo(0,20,-4.8,18.7);c.closePath();c.fill()}
+  else if(shock){oval(c,0,18,3.5,5.2,'#87534b');oval(c,0,20,1.7,1.2,'#c88d7d')}
+  else{c.strokeStyle='#885f50';c.lineWidth=1.6;c.beginPath();c.moveTo(-6,18);c.quadraticCurveTo(0,sad?13:mood==='smile'?23:19,6,18);c.stroke()}
+  if(sad&&!reduced){const drop=(t*11)%13;for(const side of [-1,1]){oval(c,side*13,7+drop,1.3,2.7,'#a9cbd778');oval(c,side*13-.3,6+drop,.45,1.3,'#e1f0ed88')}}
+  c.restore()
+ }
+ // Two-bone legs connect the hips to feet; the swing foot lifts while the other plants.
+ function gait(t,{walk=false,seated=false,cheer=false,sad=false,phone=false,reduced=false}={}){
+  t=Number.isFinite(t)?Math.max(0,t):0;const phase=reduced?0:t*8.5,moving=!!walk&&!seated&&!reduced;
+  const legs=[-1,1].map((side,i)=>{const p=phase+i*Math.PI,hip={x:side*14,y:-78};let foot,knee;
+   if(seated){knee={x:side*32,y:-37};foot={x:side*38,y:-7}}
+   else{foot={x:side*18+(moving?Math.sin(p)*14:0),y:-7-(moving?Math.max(0,Math.cos(p))*11:0)};if(!moving)knee={x:side*16,y:-42};else{const dx=foot.x-hip.x,dy=foot.y-hip.y,d=Math.hypot(dx,dy),a=(38*38-36*36+d*d)/(2*d),h=Math.sqrt(Math.max(0,38*38-a*a));knee={x:hip.x+dx*a/d+dy*h/d,y:hip.y+dy*a/d-dx*h/d}}}
+   return{hip,knee,foot,lift:moving?Math.max(0,Math.cos(p)):0}
+  });
+  const arms=[-1,1].map((side,i)=>{const swing=moving?Math.sin(phase+(i+1)*Math.PI)*16:0,shoulder={x:side*28,y:-144};let elbow={x:side*38+swing*.5,y:-121},hand={x:side*46+swing,y:seated?-119:-96};if(cheer){elbow={x:side*50,y:-164};hand={x:side*(48+(reduced?0:Math.sin(t*5)*3)),y:-193}}if(side===1&&(sad||phone)){elbow={x:43,y:-145};hand={x:phone?36:32,y:phone?-201:-179}}return{shoulder,elbow,hand}});
+  return{legs,arms,bob:moving?-Math.abs(Math.sin(phase))*2:reduced?0:Math.sin(t*1.6)*.4}
+ }
+ function character(c,x,y,t,o={}){
+  const kind=o.kind||'hero',hero=kind==='hero',female=kind==='partner',kid=kind==='kid',mood=o.mood||'smile',skin=o.skin||(hero?'#d2ac90':female?'#dcb69f':kid?'#d5af91':'#bea48e'),hair=o.hair||(hero?'#40322b':female?'#4e352d':kid?'#71513b':'#3f3834'),shirt=o.shirt||(o.wedding&&female?'#f3e9d1':o.suit?'#344358':hero?'#9a8253':female?'#6a907f':kid?'#b88462':'#647a87'),pants=o.pants||'#394455',hy=mood==='sad'?-197:-203;
+  const pose=gait(t,{...o,sad:mood==='sad'&&o.handToFace!==false,cheer:o.cheer||mood==='laugh'||mood==='shock'});c.save();c.translate(x,y);c.scale(o.scale||1,o.scale||1);c.globalAlpha*=o.fade??1;oval(c,0,3,40,8,'#13182228');
+  for(const {hip,knee,foot,lift}of pose.legs){line(c,hip.x,hip.y,knee.x,knee.y,pants,21);line(c,knee.x,knee.y,foot.x,foot.y,pants,17);line(c,knee.x-3,knee.y-4,foot.x-3,foot.y-5,'#b5bdc417',1.3);c.save();c.translate(foot.x,foot.y+5);c.rotate(lift*-.16);box(c,-11,-6,27,10,'#262c36',4);line(c,-8,4,15,4,'#828d963d',1.4);line(c,-1,-4,6,-4,'#b4bcc157',1);c.restore()}
+  c.translate(0,pose.bob);const cloth=c.createLinearGradient(-34,-155,36,-65);cloth.addColorStop(0,shirt);cloth.addColorStop(.6,shirt);cloth.addColorStop(1,shirt);box(c,-34,-157,68,94,cloth,17);
+  if(female){const hem=o.wedding?-10:-63,wide=o.wedding?60:45;c.fillStyle=shirt;c.beginPath();c.moveTo(-29,-118);c.lineTo(29,-118);c.lineTo(wide,hem);c.quadraticCurveTo(0,hem+5,-wide,hem);c.closePath();c.fill();for(const dx of [-20,-7,7,20])line(c,dx,-105,dx*(o.wedding?2.5:1.7),hem+2,'#e5e4d821',1)}
+  for(const {shoulder,elbow,hand}of pose.arms){line(c,shoulder.x,shoulder.y,elbow.x,elbow.y,shirt,16);line(c,elbow.x,elbow.y,hand.x,hand.y-5,shirt,14);line(c,hand.x-5,hand.y-7,hand.x+5,hand.y-7,'#d6d1bc40',1.5);oval(c,hand.x,hand.y,7,8.5,skin);line(c,hand.x-2,hand.y+2,hand.x+2,hand.y+3,'#936a5738',1)}
+  box(c,-10,-178,20,27,skin,5);line(c,-8,-170,8,-170,'#9e745830',2);person(c,t,shirt,skin,hy);
+  if(o.suit){c.fillStyle='#ebe4d5';c.beginPath();c.moveTo(-13,-155);c.lineTo(13,-155);c.lineTo(0,-117);c.closePath();c.fill();line(c,0,-147,0,-121,'#9f775b',5);line(c,-23,-151,-12,-128,'#78838a',1.5);line(c,23,-151,12,-128,'#78838a',1.5);box(c,15,-127,12,2,'#c7c7bc',1)}else{c.strokeStyle='#e9ddbd66';c.lineWidth=2;c.beginPath();c.moveTo(-15,-154);c.quadraticCurveTo(0,-144,15,-154);c.stroke();box(c,13,-130,13,14,'#ffffff0a',2);line(c,13,-129,26,-129,'#e8d8b830',1)}
+  face(c,t,{skin,hair,headY:hy,mood,kind,variant:o.variant||0,seed:o.seed??x*.001,reduced:o.reduced});
+  if(o.wedding&&female){c.fillStyle='#fff6df35';c.beginPath();c.moveTo(-31,hy-30);c.lineTo(30,hy-30);c.lineTo(43,hy+58);c.lineTo(-39,hy+49);c.closePath();c.fill();for(let i=0;i<5;i++)oval(c,-23+i*11,hy-31,4,3,i%2?'#dfbd92':'#f9e9c9')}
+  if(o.phone){const hand=pose.arms[1].hand;box(c,hand.x-4,hand.y-13,12,27,'#202733',3);line(c,hand.x-1,hand.y-9,hand.x+4,hand.y-9,'#85969c',1);oval(c,hand.x+2,hand.y+10,1,1,'#85969c')}
+  c.restore();return pose
+ }
+ function restingFace(c,x,y,t=0,sleeping=true){c.save();c.translate(x,y);c.scale(.84,.84);face(c,t,{headY:0,mood:sleeping?'sleep':'neutral',reduced:true});c.restore()}
  const blink=(t,seed=0)=>((t+seed)%4.7<.12?.15:1);
  function breathe(c,t,reduced=false){c.translate(0,reduced?0:Math.sin(t*1.7)*.8)}
  function street(c,t,reduced=false){for(let i=0;i<8;i++){const x=i*225;box(c,x,150+(i%3)*37,185,550,'#15202b');for(let row=0;row<5;row++)for(let col=0;col<3;col++)box(c,x+24+col*50,220+(i%3)*37+row*77,23,37,(row+col+i)%3?'#a5a08712':'#c8aa761c')}
@@ -82,5 +132,5 @@
  function years(c,t,reduced=false){line(c,430,624,1170,624,'#737e7b55',2);for(let i=0;i<3;i++){const x=480+i*320,active=ease((t-i*1.3)/1.3);oval(c,x,624,6,6,active>.5?'#c6ba99':'#4b5657');text(c,(i+1)+'-й рік',x-30,666,17,'#8b9791');c.save();c.globalAlpha=.12+active*.12;c.translate(x-65,235-(reduced?0:Math.sin(t*.5+i)*4));box(c,3,6,130,112,'#a5a89b',5);box(c,0,0,130,112,'#d0c6a9',5);box(c,0,0,130,23,'#8c6d62',3);for(let y=0;y<3;y++)for(let x=0;x<5;x++)box(c,16+x*21,38+y*21,8,8,'#606e6e55',1);c.restore()}}
  function camera(c,t,duration=8,reduced=false,focusX=800,focusY=450){if(reduced)return;const p=ease(t/duration),z=1+.035*p;c.translate(800,450);c.scale(z,z);c.translate(-800-(focusX-800)*p,-450-(focusY-450)*p)}
  function finish(c,t,reduced=false,warm=false){c.save();const g=c.createRadialGradient(800,390,230,800,450,1000);g.addColorStop(0,'#00000000');g.addColorStop(.7,'#00000008');g.addColorStop(1,'#00000065');box(c,0,0,1600,900,g);if(!reduced)for(let i=0;i<16;i++){const x=(i*113+Math.sin(t*.15+i)*13+1600)%1600,y=(i*71-t*(2+i%3)+1800)%900;oval(c,x,y,1+i%2*.3,1+i%2*.3,warm?'#ffe0a517':'#d0d6df12')}c.restore()}
- const api=Object.freeze({rasterRatio,interior,lightAt,cycleLight,windowLight,lightSpill,room,keyboard,person,blink,breathe,clock,books,plant,street,ward,warm,happy,cycle,years,tree,camera,finish});scope.AppleCinema=api;if(typeof module!=='undefined')module.exports=api;
+ const api=Object.freeze({rasterRatio,face,gait,character,restingFace,interior,lightAt,cycleLight,windowLight,lightSpill,room,keyboard,person,blink,breathe,clock,books,plant,street,ward,warm,happy,cycle,years,tree,camera,finish});scope.AppleCinema=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);

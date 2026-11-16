@@ -95,11 +95,11 @@
   function dots(c,t,x,y,size=55){for(let i=0;i<3;i++){c.save();c.globalAlpha=dotAlpha(t,i);text(c,'.',x+i*30,y,size,'#d8d4cd');c.restore()}}
   // Deform only the tree crown; the trunk, man and inscription stay anchored.
   function hill(c,img,t,reduced){rect(c,0,0,1600,900,'#191610');if(!img?.complete||!img.naturalWidth)return;
-    const iw=img.naturalWidth,ih=img.naturalHeight,sy=ih/900,sx=iw/1600;
+    const iw=img.naturalWidth,ih=img.naturalHeight,sy=ih/900;
     c.drawImage(img,0,0,iw,ih,0,0,1600,900);
     if(!reduced){c.save();c.beginPath();c.moveTo(0,0);c.lineTo(1040,0);c.lineTo(1090,350);c.lineTo(730,485);c.lineTo(0,490);c.closePath();c.clip();
       for(let y=0;y<492;y+=6){const weight=1-ease(y/510),offset=Math.sin(t*.7+y*.008)*2.5*weight;c.drawImage(img,0,y*sy,iw,Math.min(7*sy,ih-y*sy),offset,y,1600,7)}c.restore();
-      for(let i=0;i<7;i++){const phase=(t/32+i/7)%1,x=-80+phase*1760,y=180+i*19+Math.sin(phase*Math.PI*2+i)*35,wing=Math.sin(t*5+i)*5,size=5+i%3;c.strokeStyle='#3e3930';c.lineWidth=1.5;c.beginPath();c.moveTo(x-size,y-wing);c.quadraticCurveTo(x-size/2,y-3,x,y);c.quadraticCurveTo(x+size/2,y-3,x+size,y-wing);c.stroke()}}
+    }
     if(t<8)rect(c,0,0,1600,900,`rgba(0,0,0,${1-ease(t/8)})`)
   }
   function draw(c,canvas,time,reduced=false,images={},ambientTime=0){const scene=at(time),b=canvas.getBoundingClientRect(),dpr=scope.AppleCinema?.rasterRatio(b.width,b.height,scope.devicePixelRatio)||Math.min(scope.devicePixelRatio||1,2);canvas.width===Math.round(b.width*dpr)&&canvas.height===Math.round(b.height*dpr)||(canvas.width=Math.round(b.width*dpr),canvas.height=Math.round(b.height*dpr));c.setTransform(dpr,0,0,dpr,0,0);rect(c,0,0,b.width,b.height,'#000');const portraitFrame=b.width<b.height&&scene.id.startsWith('act-');const fit=Math.min(b.width/(portraitFrame?700:1600),b.height/900);c.save();c.translate((b.width-1600*fit)/2,(b.height-900*fit)/2);c.scale(fit,fit);c.beginPath();c.rect(0,0,1600,900);c.clip();const t=scene.local;

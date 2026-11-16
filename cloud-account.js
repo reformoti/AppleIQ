@@ -1,6 +1,6 @@
 'use strict';
 (()=>{
- const CLOUD='https://xar-cloud.stunningherring.chatgpt.site',META='appleiq-cloud-profile-01',C=window.AppleCloudCore,S=window.AppleSaveStore;
+ const CLOUD='https://xar-cloud.reformoti1.chatgpt.site',META='appleiq-cloud-profile-01',C=window.AppleCloudCore,S=window.AppleSaveStore;
  let flow=null,busy=false,panel=null,lastNotice='Один акаунт XaR Cloud для всіх ігор. Прогрес ігор розділений.',noticeBad=false;
  const get=id=>panel?.querySelector('#'+id);
  function notice(text,bad=false){lastNotice=text;noticeBad=bad;paint()}

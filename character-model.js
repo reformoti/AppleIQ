@@ -27,7 +27,7 @@
     g.addColorStop(.7, color); g.addColorStop(1, tint(color, -30)); return g;
   }
   function hairline(c, hair, female, variant, look) {
-    const light = tint(hair, 24);
+    const light = tint(hair, 15);
     if (look === 'cap') {
       box(c, -30, -42, 60, 15, cloth(c, '#644e48'), 5);
       ellipse(c, 0, -27, 35, 5, '#423c3d'); return;
@@ -60,7 +60,7 @@
       kind = 'hero', variant = 0, seed = 0, reduced = false, look = '', yaw = 0 } = options;
     const female = kind === 'partner', kid = kind === 'kid', sleeping = mood === 'sleep';
     const sad = mood === 'sad', shock = mood === 'shock', laugh = mood === 'laugh';
-    const t = Number.isFinite(time) ? time : 0, width = kid ? 27 : female ? 25 : variant === 1 ? 26 : 27;
+    const t = Number.isFinite(time) ? time : 0, width = kid ? 25 : female ? 24 : kind === 'hero' ? 24 : variant === 1 ? 25 : 26;
     c.save(); c.translate(0, headY); c.rotate(sad ? -.045 : sleeping ? .025 : 0);
     if (female || look === 'bun') {
       shape(c, cloth(c, hair), p => {
@@ -71,20 +71,26 @@
       for (const side of [-1, 1]) line(c, side * 31, -12, side * 29, 43, tint(hair, 20), .8);
     }
     for (const side of [-1, 1]) {
-      ellipse(c, side * (width - 1), 0, 5.3, 8.2, tint(skin, -7));
+      ellipse(c, side * (width - 1), 0, 4.1, 7.1, tint(skin, -7));
       c.strokeStyle = tint(skin, -32); c.lineWidth = .8; c.beginPath();
       c.arc(side * (width + .5), .5, 2.7, -.8, 1.6); c.stroke();
     }
-    shape(c, cloth(c, skin, -width, width), p => {
-      p.moveTo(0, -34); p.bezierCurveTo(width, -35, width + 3, -14, width - 1, 6);
-      p.bezierCurveTo(width - 3, 21, 15, 31, 0, kid ? 34 : 31);
-      p.bezierCurveTo(-15, 30, -width + 2, 19, -width + 1, 4);
-      p.bezierCurveTo(-width - 3, -17, -width, -35, 0, -34);
+    let complexion = skin;
+    if (lit()) {
+      complexion = c.createLinearGradient(-width, -5, width, 10);
+      complexion.addColorStop(0, tint(skin, -12)); complexion.addColorStop(.36, tint(skin, 6));
+      complexion.addColorStop(1, tint(skin, -9));
+    }
+    shape(c, complexion, p => {
+      p.moveTo(0, -34); p.bezierCurveTo(width - 2, -35, width + 1, -16, width - 1, 2);
+      p.bezierCurveTo(width - 2, 14, 17, 22, 10, 26);
+      p.quadraticCurveTo(0, 31, -10, 26);
+      p.bezierCurveTo(-18, 21, -width + 2, 13, -width + 1, 2);
+      p.bezierCurveTo(-width - 1, -17, -width + 2, -35, 0, -34);
     });
     // Local blush and temple modelling never span the mouth or jaw.
     if (lit()) {
-      ellipse(c, -16, 9, 7, 4, '#d9937b25'); ellipse(c, 16, 9, 7, 4, '#d9937b20');
-      line(c, -19, -15, -22, -3, '#ffdfb93b', 1.2);
+      line(c, -19, -12, -20, -2, '#ffdfb929', .9);
     }
     hairline(c, hair, female, variant, look);
     if (look === 'bun') ellipse(c, 10, -42, 16, 12, cloth(c, hair));
@@ -110,9 +116,9 @@
         c.moveTo(x - 5, eyeY); c.quadraticCurveTo(x, shock ? -8 : -4.4, x + 5, eyeY); c.stroke();
       }
     }
-    c.strokeStyle = '#9f786252'; c.lineWidth = .8; c.beginPath();
-    c.moveTo(1 + yaw, 2); c.quadraticCurveTo(-2 + yaw, 8, -.5 + yaw, 9); c.lineTo(3 + yaw, 9); c.stroke();
-    ellipse(c, 2 + yaw, 10, .8, .45, '#976f5b65');
+    c.strokeStyle = '#8f6c5652'; c.lineWidth = .65; c.beginPath();
+    c.moveTo(.8 + yaw, 3); c.quadraticCurveTo(-.8 + yaw, 7, 1 + yaw, 8); c.stroke();
+    line(c, 1 + yaw, 8.4, 3 + yaw, 8, '#8f6c563b', .6);
     if (laugh) {
       shape(c, '#995f53', p => { p.moveTo(-7, 16); p.quadraticCurveTo(0, 19, 7, 16); p.quadraticCurveTo(0, 27, -7, 16); });
       shape(c, '#f7e9d4', p => { p.moveTo(-5.5, 17); p.quadraticCurveTo(0, 19, 5.5, 17); p.lineTo(3.5, 20); p.lineTo(-3.5, 20); });

@@ -7,3 +7,7 @@
 /* Місце для кнопки налаштувань у всіх заголовках катсцен. */
 .film-root .film-top,.happy-root .happy-top{padding-left:76px;box-sizing:border-box;gap:16px}.film-root .film-top>span:first-child{min-width:0;overflow-wrap:anywhere}.film-root .film-top button{flex-shrink:0}
 @media(max-width:700px){.film-root .film-top,.happy-root .happy-top{padding-left:65px;gap:10px}}
+
+/* Службові поля фільму завжди чорні; колір залишається лише всередині сцени. */
+body.story-mode,#story-root.film-root,#story-root.happy-root,.film-top,.film-bottom,.happy-top{background:#000!important}
+.film-root canvas,.happy-root canvas{background:#000}

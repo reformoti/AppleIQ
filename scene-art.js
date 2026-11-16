@@ -314,17 +314,18 @@
       surface(c, x, 111, 27, 410, '#91a9a3', '#5f8584', 2);
       for (let i = 0; i < 4; i++) line(c, x + 3 + i * 6, 120, x + 3 + i * 6, 515, i % 2 ? '#c6d1b932' : '#3b68653c', 1);
     }
-    C.floorShadow(c, 811, 781, 550, 30, .28);
-    surface(c, 360, 610, 920, 100, '#b9c2b7', '#778e90', 12);
-    surface(c, 330, 590, 950, 55, '#eee4cb', '#bac2b5', 13);
-    for (const x of [342, 1250]) {
+    C.floorShadow(c, 584, 781, 295, 24, .28);
+    surface(c, 360, 610, 480, 100, '#b9c2b7', '#778e90', 12);
+    surface(c, 330, 590, 510, 55, '#eee4cb', '#bac2b5', 13);
+    for (const x of [342, 818]) {
       surface(c, x, 640, 18, 135, '#c2ccc4', '#627e85', 4);
       line(c, x + 3, 647, x + 3, 763, '#f3e6c76b', 1);
     }
-    surface(c, 430, 597, 810, 47, '#a5bdbe', '#6c929e', 10);
-    c.save(); c.beginPath(); c.roundRect(430, 597, 810, 47, 10); c.clip();
-    for (let i = 0; i < 10; i++) line(c, 544 + i * 76, 604, 566 + i * 76, 638, '#294f6926', 1);
+    surface(c, 430, 597, 382, 47, '#a5bdbe', '#6c929e', 10);
+    c.save(); c.beginPath(); c.roundRect(430, 597, 382, 47, 10); c.clip();
+    for (let i = 0; i < 6; i++) line(c, 453 + i * 63, 604, 466 + i * 63, 638, '#294f6926', 1);
     c.restore(); surface(c, 360, 590, 130, 43, '#e9dfc6', '#c3c6b5', 12);
+    surface(c, 825, 575, 16, 150, '#d2d7c6', '#7d9a9c', 5);
     surface(c, 120, 380, 180, 140, '#405660', '#263f4c', 7);
     box(c, 130, 390, 160, 120, '#132e3c', 3);
     line(c, 210, 520, 210, 730, '#8aa6aa', 7); line(c, 160, 730, 260, 730, '#8aa6aa', 5);
@@ -345,33 +346,46 @@
     sleeper(c, 388, 609);
     glow(c, 1302, 270, 440, '#e7e1bc18'); c.restore();
   }
-  function warmRoom(c, t, reduced = false) {
-    c.save();
-    // Wainscot and a hand-woven rug make this room distinct from the bedroom.
-    for (const x of [15, 76, 137, 480, 541, 602, 663, 724, 785, 846, 907, 968, 1478, 1539]) {
-      box(c, x, 495, 43, 149, '#c7995c08', 2); line(c, x, 495, x, 640, '#e2b97b18', .8);
+  const WARM_LAYOUT=Object.freeze({table:Object.freeze({x:470,y:725,w:145,h:82}),chair:Object.freeze({x:1160,y:475,w:360,h:282}),actor:Object.freeze({x:660,y:175,w:370,h:650})});
+  /** One complete set avoids the conflicting old and new furniture layers. */
+  function warmRoom(c,t,reduced=false){
+    const C=scope.AppleCinema;c.save();surface(c,0,0,1600,650,'#60503f','#4c4037');
+    surface(c,0,650,1600,250,'#44372e','#2a2523');line(c,0,650,1600,650,'#96744e',3);
+    for(let i=0;i<6;i++)line(c,0,690+i*37,1600,690+i*37,'#b68b5730',1);
+    for(const x of [15,76,137,480,541,602,663,724,785,846,907,968,1478,1539]){
+      box(c,x,495,43,149,'#c7995c08',2);line(c,x,495,x,640,'#e2b97b18',.8);
     }
-    line(c, 0, 487, 1600, 487, '#d0a06b35', 3);
-    oval(c, 825, 783, 430, 72, '#937959');
-    for (let i = 0; i < 4; i++) {
-      c.strokeStyle = '#c9a77923'; c.lineWidth = 1; c.beginPath(); c.ellipse(825, 783, 410 - i * 19, 61 - i * 4, 0, 0, TAU); c.stroke();
-    }
-    surface(c, 1130, 490, 310, 190, '#9f7957', '#624d3c', 22);
-    surface(c, 1147, 506, 274, 124, '#ab8764', '#826348', 13);
-    for (const x of [1155, 1410]) surface(c, x, 550, 35, 143, '#b18d65', '#73533d', 10);
-    for (let i = 0; i < 6; i++) line(c, 1184 + i * 34, 513, 1184 + i * 34, 620, '#e2bc8122', .8);
-    for (const x of [1175, 1390]) wood(c, x, 682, 16, 27, true);
-    portrait(c, 1370, 140, 140, 195); portrait(c, 550, 164, 95, 75);
-    wood(c, 580, 675, 170, 23); wood(c, 592, 698, 18, 62, true); wood(c, 720, 698, 18, 62, true);
-    box(c, 620, 640, 60, 35, '#d2b58a', 4); oval(c, 650, 642, 27, 4, '#f0d4a588');
-    for (let i = 0; i < 3; i++) {
-      const drift = reduced ? 0 : Math.sin(t * .7 + i) * 2;
-      c.strokeStyle = '#ebc9a132'; c.lineWidth = 1; c.beginPath();
-      c.moveTo(637 + i * 9, 633); c.bezierCurveTo(630 + i * 9 + drift, 622, 648 + i * 9 + drift, 620, 640 + i * 9, 606); c.stroke();
-    }
-    glow(c, 1050, 372, 480, '#eebd6b16'); c.restore();
+    line(c,0,487,1600,487,'#d0a06b35',3);
+    wood(c,160,150,320,320,true);box(c,176,166,288,288,'#333846');oval(c,380,250,37,37,'#ccb07c');
+    line(c,320,166,320,454,'#b48a60',7);line(c,176,310,464,310,'#b48a60',7);
+    for(const x of [150,460]){surface(c,x,130,25,365,'#98764e','#6e573f',5);for(let i=0;i<3;i++)line(c,x+5+i*6,138,x+5+i*6,484,'#d6b47a20',1)}
+    C.floorShadow(c,260,698,230,20,.3);wood(c,40,558,400,113,true);wood(c,34,548,412,14);
+    for(let i=0;i<3;i++){wood(c,53+i*125,573,111,81,true);oval(c,108+i*125,611,3,3,'#c4a071')}
+    C.books(c,70,487,166,60);box(c,264,534,107,14,'#cab998',2);
+    C.plant(c,98,790,t,.8,reduced);C.clock(c,1420,103,t,.68);portrait(c,1370,140,140,195);portrait(c,550,164,95,75);
+    oval(c,825,790,430,70,'#917656');
+    for(let i=0;i<3;i++){c.strokeStyle='#c9a77923';c.lineWidth=1;c.beginPath();c.ellipse(825,790,410-i*19,60-i*4,0,0,TAU);c.stroke()}
+    // A separate backrest, seat cushion, armrests and feet read as an armchair.
+    C.floorShadow(c,1338,757,195,20,.32);
+    for(const x of [1190,1460])wood(c,x,709,17,43,true);
+    surface(c,1176,475,324,190,'#a6835e','#74573e',28);
+    surface(c,1190,490,296,151,'#b18c65','#876647',20);
+    for(const x of [1265,1400]){oval(c,x,555,2.3,2.3,'#705139');line(c,x-6,548,x+6,562,'#d6b47e24',.7)}
+    surface(c,1190,638,296,66,'#bd986c','#876548',15);line(c,1203,650,1473,650,'#edc99155',1);
+    surface(c,1158,582,44,132,'#ae8861','#76563e',17);surface(c,1477,582,44,132,'#ae8861','#76563e',17);
+    line(c,1170,598,1170,694,'#dfb88135',1);line(c,1488,598,1488,694,'#dfb88135',1);
+    line(c,1050,710,1050,325,'#a18760',6);oval(c,1050,710,66,10,'#584733');
+    surface(c,992,285,116,95,'#dfbd82','#b08a55',13);glow(c,1050,375,430,'#edb75c2a');
+    // The table is to the left of the actor's visible silhouette, with a real cup.
+    const table=WARM_LAYOUT.table;C.floorShadow(c,table.x+table.w/2,810,100,12,.25);
+    wood(c,table.x,table.y,table.w,17);for(const x of [482,587])wood(c,x,table.y+17,14,table.h-17,true);
+    oval(c,537,724,34,5,'#d5bf97');surface(c,514,686,47,36,'#d8c09a','#b49a70',5);
+    c.strokeStyle='#c6aa80';c.lineWidth=4;c.beginPath();c.arc(564,701,9,-Math.PI/2,Math.PI/2);c.stroke();oval(c,537.5,688,20,3,'#76533d');
+    if(!reduced)for(let i=0;i<3;i++){const drift=Math.sin(t*.7+i)*2;c.strokeStyle='#ebc9a132';c.lineWidth=1;c.beginPath();c.moveTo(525+i*9,678);c.bezierCurveTo(518+i*9+drift,667,536+i*9+drift,663,528+i*9,650);c.stroke()}
+    c.restore();
   }
-  function ambulanceDetails(c, t, reduced = false) {
+
+  function ambulanceDetails(c, wheelAngle, reduced = false) {
     c.save();
     surface(c, -173, -198, 365, 118, '#e7e5d6', '#bfcac4', 8);
     line(c, -58, -191, -58, -81, '#748f963d', 1);
@@ -389,7 +403,7 @@
     line(c, -175, -6, 200, -6, '#7e96985c', 3);
     for (const x of [-90, 250]) {
       oval(c, x, 0, 33, 33, '#263843'); oval(c, x, 0, 22, 22, '#8fa1a0'); oval(c, x, 0, 7, 7, '#516c79');
-      for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + (reduced ? 0 : t * 4); line(c, x + Math.cos(a) * 9, Math.sin(a) * 9, x + Math.cos(a) * 18, Math.sin(a) * 18, '#d1d3bc', 2); }
+      for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + (reduced ? 0 : wheelAngle); line(c, x + Math.cos(a) * 9, Math.sin(a) * 9, x + Math.cos(a) * 18, Math.sin(a) * 18, '#d1d3bc', 2); }
     }
     c.restore();
   }
@@ -443,6 +457,6 @@
       (i * 47 - t * (2 + i % 3) + 1200) % 600, .7, .7, '#bfc7c12b');
     c.restore();
   }
-  scope.AppleSceneArt = Object.freeze({ room, windowView, landscape, hospital, warmRoom, ambulanceDetails, tree, arena, wood, surface, glow, portrait });
+  scope.AppleSceneArt = Object.freeze({ room, windowView, landscape, hospital, warmRoom, WARM_LAYOUT, ambulanceDetails, tree, arena, wood, surface, glow, portrait });
   if (typeof module !== 'undefined') module.exports = scope.AppleSceneArt;
 })(typeof window === 'undefined' ? globalThis : window);

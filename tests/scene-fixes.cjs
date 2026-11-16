@@ -25,8 +25,7 @@ try{const canvas={width:1600,height:900,getBoundingClientRect:()=>({width:1600,h
 const table=Art.WARM_LAYOUT.table,actor=Art.WARM_LAYOUT.actor;
 const scale=Math.min(actor.w/863,actor.h/1300),visibleLeft=actor.x+(actor.w-863*scale)/2+863*.27*scale;
 assert.ok(visibleLeft>table.x+table.w+60,'the table stays away from the character silhouette');
-for(const mask of Object.values(E.EYE_MASKS)){assert.equal(mask.length,4);assert.ok(mask.every(Number.isFinite));assert.ok(mask[0]+mask[2]<1&&mask[1]+mask[3]<1)}
 const ui=fs.readFileSync(require.resolve('../index.html'),'utf8');assert.ok(!/href="visual-polish\.css/.test(ui),'restore the original interface styles');
 const story=fs.readFileSync(require.resolve('../story.js'),'utf8');assert.ok(story.includes('genius-hill-v448.webp'));assert.ok(story.includes('Під попелом ще тліє моя іскра…'));
 assert.ok(fs.statSync(require.resolve('../assets/genius-hill-v448.webp')).size>10000);
-assert.equal(depth,0);console.log('Passed: mother/father models, stationary road and parked wheels, travel-linked wheel rotation, short hospital bed, table clearance, eye-mask bounds, old UI and new inscription asset.');
+assert.equal(depth,0);console.log('Passed: mother/father models, stationary road and parked wheels, travel-linked wheel rotation, short hospital bed, table clearance, old UI and new inscription asset.');

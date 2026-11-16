@@ -107,7 +107,7 @@
   c.save();c.beginPath();c.rect(140,401,141,96);c.clip();box(c,140,401,141,96,'#263c42');
   for(let i=0;i<7;i++){line(c,140+i*23,401,140+i*23,497,'#6b9e8a16',1);line(c,140,401+i*16,281,401+i*16,'#6b9e8a16',1)}
   c.strokeStyle='#9ec9a9';c.lineWidth=1.5;c.beginPath();for(let x=140;x<=281;x++){const phase=((x-140)*.07-(reduced?0:t*2))%TAU,pulse=Math.exp(-Math.pow(Math.sin(phase/2)*8,2))*Math.cos(phase*4)*24,y=454-pulse;x===140?c.moveTo(x,y):c.lineTo(x,y)}c.stroke();c.restore();
-  text(c,'маленький Джо',563,741,10,'#aab8b1');text(c,'ПАЛАТА 03',817,121,16,'#d7ded6');paper(c,558,710,80,20);plant(c,1495,785,t,.45,reduced)
+  text(c,'ПАЛАТА 03',817,121,16,'#d7ded6');plant(c,1495,785,t,.45,reduced)
  }
 
  function warm(c,t,reduced=false){for(let i=0;i<13;i++){const x=430+i*40;line(c,x,788,x+19,790,'#e1bb6a12',1)}for(let i=0;i<6;i++)line(c,1150+i*46,571,1150+i*46,649,'#c7a56c22',1);box(c,40,557,430,114,'#6d513e',6);for(let i=0;i<3;i++){box(c,58+i*136,575,112,78,'#7d5d43',4);oval(c,111+i*136,613,3,3,'#b59465')}books(c,72,491,170,65);paper(c,272,538,107,17);plant(c,100,790,t,.85,reduced);clock(c,1420,103,t,.68);frame(c,535,170,108,87,'ДІМ');for(let i=0;i<5;i++)line(c,1152+i*51,514,1154+i*51,656,'#d1b68a12',1);halo(c,1050,373,240,'#f5ce8b09');for(let i=0;i<4;i++)line(c,159+i*7,148,159+i*7,477,'#d6ad7d2d',2);SceneArt?.warmRoom(c,t,reduced)}

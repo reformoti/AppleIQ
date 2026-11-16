@@ -54,6 +54,15 @@
       c.quadraticCurveTo(-2 + i * 3, -37, 23 + i * .4, -20 + i * 2); c.stroke();
     }
   }
+  /** Paint long hair behind the neck and clothing when rendering a full actor. */
+  function backHair(c, hair) {
+    shape(c, cloth(c, hair), p => {
+      p.moveTo(-27, -25); p.bezierCurveTo(-42, -8, -34, 37, -38, 48);
+      p.quadraticCurveTo(-23, 58, -19, 45); p.lineTo(22, 43);
+      p.quadraticCurveTo(34, 51, 37, 43); p.bezierCurveTo(31, 17, 41, -27, 18, -36);
+    });
+    for (const side of [-1, 1]) line(c, side * 31, -12, side * 29, 43, tint(hair, 20), .8);
+  }
   /** Draw a face without a lower-face dark overlay: smiles cannot resemble a beard. */
   function face(c, time, options = {}) {
     const { skin = '#d2ac90', hair = '#40322b', headY = -203, mood = 'neutral',
@@ -62,14 +71,7 @@
     const sad = mood === 'sad', shock = mood === 'shock', laugh = mood === 'laugh';
     const t = Number.isFinite(time) ? time : 0, width = kid ? 25 : female ? 24 : kind === 'hero' ? 24 : variant === 1 ? 25 : 26;
     c.save(); c.translate(0, headY); c.rotate(sad ? -.045 : sleeping ? .025 : 0);
-    if (female || look === 'bun') {
-      shape(c, cloth(c, hair), p => {
-        p.moveTo(-27, -25); p.bezierCurveTo(-42, -8, -34, 37, -38, 48);
-        p.quadraticCurveTo(-23, 58, -19, 45); p.lineTo(22, 43);
-        p.quadraticCurveTo(34, 51, 37, 43); p.bezierCurveTo(31, 17, 41, -27, 18, -36);
-      });
-      for (const side of [-1, 1]) line(c, side * 31, -12, side * 29, 43, tint(hair, 20), .8);
-    }
+    if ((female || look === 'bun') && options.backHair !== false) backHair(c, hair);
     for (const side of [-1, 1]) {
       ellipse(c, side * (width - 1), 0, 4.1, 7.1, tint(skin, -7));
       c.strokeStyle = tint(skin, -32); c.lineWidth = .8; c.beginPath();
@@ -198,6 +200,10 @@
       c.restore();
     }
     c.translate(0, pose.bob);
+    if (female || o.look === 'bun') {
+      c.save(); c.translate(0, hy); c.rotate(mood === 'sad' ? -.045 : 0);
+      backHair(c, hair); c.restore();
+    }
     shape(c, cloth(c, shirt), p => {
       p.moveTo(-12, -159); p.quadraticCurveTo(-27, -159, -34, -145);
       p.lineTo(-29, -107); p.lineTo(-28, -65); p.quadraticCurveTo(0, -60, 28, -65);
@@ -231,7 +237,7 @@
       box(c, 12, -130, 13, 15, '#ede0c00c', 2); line(c, 12, -129, 25, -129, '#e3d2b947', .9);
     }
     pose.arms.forEach(({ shoulder, elbow, hand: h }, i) => limb(c, shoulder, elbow, h, shirt, [15, 12], skin, i ? 1 : -1));
-    face(c, time, { ...o, skin, hair, headY: hy, mood, kind, variant,
+    face(c, time, { ...o, skin, hair, headY: hy, mood, kind, variant, backHair: false,
       yaw: o.walk ? .65 : 0, seed: o.seed ?? x * .001 });
     if (o.wedding && female) {
       shape(c, '#fff3d82d', p => { p.moveTo(-27, hy - 30); p.lineTo(25, hy - 30); p.lineTo(39, hy + 61); p.lineTo(-37, hy + 54); });

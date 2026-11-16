@@ -356,7 +356,7 @@
       box(c,x,495,43,149,'#c7995c08',2);line(c,x,495,x,640,'#e2b97b18',.8);
     }
     line(c,0,487,1600,487,'#d0a06b35',3);
-    wood(c,160,150,320,320,true);box(c,176,166,288,288,'#333846');oval(c,380,250,37,37,'#ccb07c');
+    wood(c,160,150,320,320,true);box(c,176,166,288,288,'#000');
     line(c,320,166,320,454,'#b48a60',7);line(c,176,310,464,310,'#b48a60',7);
     for(const x of [150,460]){surface(c,x,130,25,365,'#98764e','#6e573f',5);for(let i=0;i<3;i++)line(c,x+5+i*6,138,x+5+i*6,484,'#d6b47a20',1)}
     C.floorShadow(c,260,698,230,20,.3);wood(c,40,558,400,113,true);wood(c,34,548,412,14);
@@ -382,6 +382,47 @@
     oval(c,537,724,34,5,'#d5bf97');surface(c,514,686,47,36,'#d8c09a','#b49a70',5);
     c.strokeStyle='#c6aa80';c.lineWidth=4;c.beginPath();c.arc(564,701,9,-Math.PI/2,Math.PI/2);c.stroke();oval(c,537.5,688,20,3,'#76533d');
     if(!reduced)for(let i=0;i<3;i++){const drift=Math.sin(t*.7+i)*2;c.strokeStyle='#ebc9a132';c.lineWidth=1;c.beginPath();c.moveTo(525+i*9,678);c.bezierCurveTo(518+i*9+drift,667,536+i*9+drift,663,528+i*9,650);c.stroke()}
+    c.restore();
+  }
+
+  /** Street facade, with its foundation and entry steps above the road curb. */
+  function clinicFacade(c) {
+    c.save();
+    surface(c, 100, 225, 490, 440, '#4b535c', '#343e49', 3);
+    box(c, 566, 229, 24, 421, '#19293645');
+    surface(c, 91, 205, 508, 23, '#747978', '#474e55', 2);
+    line(c, 99, 211, 589, 211, '#a0a18e66', 2);
+    for (const y of [249, 425, 644]) {
+      line(c, 106, y, 565, y, '#9ca69e26', 1);
+      line(c, 106, y + 4, 565, y + 4, '#17293555', 2);
+    }
+    function window(x, y, w, h) {
+      box(c, x - 5, y - 5, w + 10, h + 10, '#263643', 2);
+      surface(c, x, y, w, h, '#81908d', '#465c68', 1);
+      box(c, x + 4, y + 4, w - 8, h - 8, '#d5bf8330');
+      line(c, x + w / 2, y + 1, x + w / 2, y + h, '#3d4d58', 4);
+      line(c, x, y + h * .56, x + w, y + h * .56, '#3d4d58', 3);
+      line(c, x + 6, y + 6, x + w / 2 - 6, y + 6, '#e4e0bd5c', 1);
+      surface(c, x - 9, y + h + 4, w + 18, 8, '#8c9290', '#485661', 1);
+    }
+    for (let i = 0; i < 4; i++) window(133 + i * 110, 283, 77, 106);
+    for (const x of [141, 474]) window(x, 467, 77, 103);
+    // Medical emblem above a recessed, double-glazed entrance.
+    box(c, 335, 441, 47, 35, '#c3c5af', 3);
+    box(c, 355, 446, 8, 25, '#8b5551'); box(c, 347, 454, 24, 8, '#8b5551');
+    box(c, 282, 500, 153, 165, '#1b2935', 3);
+    for (const x of [296, 363]) {
+      surface(c, x, 513, 62, 147, '#66818a', '#304957', 2);
+      box(c, x + 5, 519, 52, 94, '#adbbaf24', 1);
+      line(c, x + 8, 522, x + 40, 522, '#d1d9c65e', 1);
+      box(c, x + 46, 586, 3, 23, '#c1c6b5', 1);
+    }
+    line(c, 359, 510, 359, 660, '#182c39', 4);
+    surface(c, 265, 487, 188, 14, '#858e8d', '#465663', 2);
+    line(c, 275, 502, 286, 515, '#697d82', 3);
+    line(c, 442, 502, 430, 515, '#697d82', 3);
+    surface(c, 274, 665, 170, 13, '#8c9290', '#4c5961', 1);
+    surface(c, 262, 678, 194, 13, '#727d81', '#44535d', 1);
     c.restore();
   }
 
@@ -457,6 +498,6 @@
       (i * 47 - t * (2 + i % 3) + 1200) % 600, .7, .7, '#bfc7c12b');
     c.restore();
   }
-  scope.AppleSceneArt = Object.freeze({ room, windowView, landscape, hospital, warmRoom, WARM_LAYOUT, ambulanceDetails, tree, arena, wood, surface, glow, portrait });
+  scope.AppleSceneArt = Object.freeze({ room, windowView, landscape, hospital, warmRoom, WARM_LAYOUT, clinicFacade, ambulanceDetails, tree, arena, wood, surface, glow, portrait });
   if (typeof module !== 'undefined') module.exports = scope.AppleSceneArt;
 })(typeof window === 'undefined' ? globalThis : window);

@@ -99,6 +99,13 @@
     c.drawImage(img,0,0,iw,ih,0,0,1600,900);
     if(!reduced){c.save();c.beginPath();c.moveTo(0,0);c.lineTo(1040,0);c.lineTo(1090,350);c.lineTo(730,485);c.lineTo(0,490);c.closePath();c.clip();
       for(let y=0;y<492;y+=6){const weight=1-ease(y/510),offset=Math.sin(t*.7+y*.008)*2.5*weight;c.drawImage(img,0,y*sy,iw,Math.min(7*sy,ih-y*sy),offset,y,1600,7)}c.restore();
+      // Distant birds belong to the animated sky, never to the illustration.
+      for(let i=0;i<7;i++){
+        const phase=(t/32+i/7)%1,x=1150+phase*560,y=160+i*19+Math.sin(phase*Math.PI*2+i)*22,
+          wing=Math.sin(t*5+i)*3,size=3+i%3,alpha=ease(phase/.1)*(1-ease((phase-.85)/.15));
+        c.save();c.globalAlpha*=alpha*.75;c.strokeStyle='#3e3930';c.lineWidth=1.3;c.beginPath();
+        c.moveTo(x-size,y-wing);c.quadraticCurveTo(x-size/2,y-3,x,y);c.quadraticCurveTo(x+size/2,y-3,x+size,y-wing);c.stroke();c.restore();
+      }
     }
     if(t<8)rect(c,0,0,1600,900,`rgba(0,0,0,${1-ease(t/8)})`)
   }
